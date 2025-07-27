@@ -41,7 +41,7 @@ def create_tool_io_description(df_connections, tool_id):
     return input_desc + output_desc
 
 
-def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, message_placeholder=None):
+def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, message_placeholder=None, model="gpt-4o"):
     """
     Convert Alteryx tool configurations into detailed technical descriptions for Python code generation.
     
@@ -146,6 +146,12 @@ def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, mess
     ### Python Implementation Notes
     Use pandas merge() with how='left', left_on='Customer_ID', right_on='Customer_ID'.
     
+    Important instructions:
+    - Don't explicitly include all parameters of the method, only mention the parameters that are used.
+    - Warning about ignoring alteryx habit like using "Right_" / '*Unknown' (ignored as per instructions; not a real column) is welcome.
+    - Python code snippets are welcome.
+    - Keep all the details for human and model to understand the tool and be able to generate the code, but don't include details don't contributes to the code generation.
+    
     Provide only the detailed description below:
     """
 
@@ -154,7 +160,7 @@ def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, mess
         template=template
     )
 
-    llm = ChatOpenAI(temperature=0, model_name="gpt-4o")
+    llm = ChatOpenAI(temperature=0, model_name=model)
     chain = LLMChain(llm=llm, prompt=prompt_template)
 
     results = []
@@ -273,18 +279,18 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     Structure your response as:
     
     ## Workflow Overview
-    [Brief description of the overall data processing purpose]
+    [Brief description of the overall data processing purpose in business language]
     
     ## Python Code Structure Recommendations
     
     ### Function Organization
-    [Recommend how to group tools into functions, e.g., "Create separate functions for data loading, cleaning, and transformation"]
+    [Recommend how to group multiple tools into functions]
     
     ### Variable Naming Strategy
-    [Suggest meaningful names for dataframes and variables, e.g., "Use descriptive names like 'customer_data_df', 'sales_data_df', 'merged_data_df'"]
+    [Suggest meaningful names for dataframes and variables, it could be reasonably long to help understand]
     
     ### Pythonic Optimizations
-    [Identify opportunities for loops, list comprehensions, functions, etc., e.g., "Use a loop to process multiple files instead of separate tools"]
+    [Identify and call out opportunities for which tools we might be able to combine into a single function, can be concise because we are using python, loops, list comprehensions, functions, etc., e.g., "For tool ID 13,14,15, Use a loop to process multiple files instead of separate tools"]
     
     ### Data Flow Management
     [Explain how to handle data flow between steps, e.g., "Chain operations using method chaining where possible"]
@@ -298,10 +304,70 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     - **Python Patterns**: [specific Python patterns to use]
     
     ### Phase 2: Data Processing
-    [Specific guidance for processing tools]
-    - **Function Name**: [suggested function name]
-    - **Variable Names**: [suggested variable names]
-    - **Python Patterns**: [specific Python patterns to use]
+    [Organize the data processing phase by grouping related tools into logical units, referencing their tool IDs, and suggesting how to combine them into Pythonic functions. For each logic unit, provide the recommended function name, the tool IDs it covers, a brief description, and the actual combined Python code that would implement this logic.]
+
+    Here is an example of how you might structure this section:
+
+    ### Logic Unit 1: Data Cleaning and Preprocessing
+    - **Tools Included**: [e.g., Tool IDs 3, 5, 7, 8]
+    - **Purpose**: These tools perform sequential cleaning steps on the `raw_customer_data` DataFrame, such as removing nulls, standardizing column names, and filtering invalid records. In Python, these can be combined into a single function for clarity and efficiency.
+    - **Suggested Function Name**: `clean_customer_data`
+    - **Combined Code Example**:
+    ```python
+    def clean_customer_data(raw_customer_data):
+        # Remove rows with missing customer_id
+        cleaned = raw_customer_data.dropna(subset=["customer_id"])
+        # Standardize column names
+        cleaned.columns = [col.lower().strip() for col in cleaned.columns]
+        # Filter out inactive customers
+        cleaned = cleaned[cleaned["status"] == "active"]
+        # Remove duplicate records
+        cleaned = cleaned.drop_duplicates()
+        return cleaned
+    ```
+
+    ### Logic Unit 2: Data Joining and Enrichment
+    - **Tools Included**: [e.g., Tool IDs 14, 15, 16]
+    - **Purpose**: These tools join the cleaned customer data with sales and region data. In Python, this can be handled in a single function using `pd.merge` for each join.
+    - **Suggested Function Name**: `enrich_customer_data`
+    - **Combined Code Example**:
+    ```python
+    def enrich_customer_data(cleaned_customers, sales_data, region_data):
+        # Join customer with sales
+        customer_sales = cleaned_customers.merge(sales_data, on="customer_id", how="left")
+        # Join with region info
+        enriched = customer_sales.merge(region_data, on="region_id", how="left")
+        return enriched
+    ```
+
+    ### Logic Unit 3: Aggregation and Feature Engineering
+    - **Tools Included**: [e.g., Tool IDs 21, 22]
+    - **Purpose**: These tools aggregate sales by region and compute summary statistics. Combine these into a single aggregation function.
+    - **Suggested Function Name**: `aggregate_sales_by_region`
+    - **Combined Code Example**:
+    ```python
+    def aggregate_sales_by_region(enriched_data):
+        # Aggregate total sales and customer count by region
+        summary = (
+            enriched_data.groupby("region_name")
+            .agg(total_sales=("sales_amount", "sum"), customer_count=("customer_id", "nunique"))
+            .reset_index()
+        )
+        return summary
+    ```
+
+    ### Logic Unit 4: Additional Transformations (if any)
+    - **Tools Included**: [e.g., Tool IDs 25, 26]
+    - **Purpose**: Apply any additional formulas or transformations, such as calculating sales per customer.
+    - **Suggested Function Name**: `calculate_sales_per_customer`
+    - **Combined Code Example**:
+    ```python
+    def calculate_sales_per_customer(summary_df):
+        summary_df["sales_per_customer"] = summary_df["total_sales"] / summary_df["customer_count"]
+        return summary_df
+    ```
+
+    [Continue grouping and describing each logic unit in the workflow, referencing the actual tool IDs and showing the combined Python code for each section. This approach results in a modular, readable, and maintainable Python codebase that mirrors the logical structure of the Alteryx workflow.]
     
     ### Phase 3: Data Output
     [Specific guidance for output tools]
@@ -312,30 +378,36 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     ## Alteryx to Python Conversions
     
     ### Key Differences to Handle
-    - **Multiple Outputs**: Alteryx joins can have multiple outputs, Python merges have one
+    - **Multiple Outputs**: Alteryx tools like joins, filters, etc. can have multiple outputs, Python will have less.
     - **Iterative Operations**: Use loops instead of multiple similar tools
     - **Variable Scope**: Plan variable names and scope carefully
-    - **Error Handling**: Add appropriate try-catch blocks
+    - **Error Handling**: Add appropriate try-catch blocks with clear error messages indicate which step is failing.
     
     ### Recommended Code Structure
-    ```python
-    # Example structure
-    def load_data():
-        # Data loading logic
-        pass
-    
-    def process_data(data_df):
-        # Data processing logic
-        pass
-    
-    def main():
-        # Main workflow
-        pass
-    ```
+    # High-Level Python Code Structure (Natural Language Guide)
+    - **Data Loading Phase**: Begin by loading all required input datasets using dedicated functions. If multiple tools load data from similar sources, group them into a single function or logical block. Assign clear, descriptive variable names to each loaded DataFrame.
+    - **Preprocessing & Cleaning**: Organize all data cleaning and preprocessing steps into one or more functions. If several tools perform similar cleaning operations (e.g., filtering, type conversion), consider combining them into a single function with parameters.
+    - **Transformation & Processing**: For tools that transform or join data, group related operations together. If multiple tools operate on the same DataFrame or perform sequential transformations, chain these steps within a function. For complex workflows, break down processing into logical phases (e.g., "customer enrichment", "sales aggregation").
+    - **Data Merging & Joins**: If the workflow includes multiple join or union tools, describe how to consolidate these into fewer, well-structured merge operations in Python. Remove unnecessary column prefixes (like "Right_") and handle multiple outputs by returning tuples or using clear variable names.
+    - **Iterative or Repetitive Operations**: Where the workflow uses repeated tools for similar tasks (e.g., multiple filters or formulas), use Python loops or list comprehensions to generalize the logic.
+    - **Output Phase**: Collect all output steps at the end of the workflow. Use dedicated functions for writing or exporting data, and ensure variable names reflect the output content.
+    - **Workflow Orchestration**: Don't use `main()` function to orchestrate the overall workflow since we start with Jupyter Notebook, calling each phase in the correct order as determined by the execution sequence. Pass DataFrames between functions as needed, and document the data flow.
+    - **Error Handling**: Add try-except blocks around major workflow phases to catch and report errors, indicating which step failed.
+    - **Modularity & Reusability**: Structure the code so that each logical phase (loading, cleaning, processing, output) is encapsulated in a function. This makes the code easier to test and maintain.
+    - **Example**:  
+      - `def load_customer_data()`
+      - `def clean_sales_data(sales_df)`
+      - `def join_customer_sales(customer_df, sales_df)`
+      - `def aggregate_sales_by_region(joined_df)`
+      - `def export_results(final_df)`
     
     ## Implementation Notes
     [Specific notes about implementation details, potential challenges, and best practices]
     
+    # Most important instructions (You should mention this when try to combine the code in Phase 2 above, and also include this in the final result.):
+    Try your best to not use column names like "Right_" or "Left_" after join in the code structure guide, just use the column names as they are. When conduct join, if columns need to be dropped or renamed, please do before the join instead of introduce "Right_" or "Left_" columns. 
+    Don't profiling/visualize the data, we only need the data to be processed.
+
     Provide only the detailed code structure guide below:
     """
 
@@ -362,7 +434,7 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     return combined_description, full_prompt
 
 
-def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="", extra_user_instructions="", model="gpt-4o"):
+def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="", extra_user_instructions="", workflow_description="", model="gpt-4o"):
     """
     Generate working Python code by combining detailed tool descriptions and code structure guidance.
     
@@ -371,6 +443,7 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
         df_descriptions (pd.DataFrame): DataFrame containing 'tool_id' and 'description' columns.
         execution_sequence (str): The execution order of tools.
         extra_user_instructions (str): Additional instructions for the code generation.
+        workflow_description (str): The workflow structure guide generated in step 2.
         model (str): The LLM model to use.
     
     Returns:
@@ -400,18 +473,25 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
     Additional context: {extra_user_instructions}
     Execution sequence: {execution_sequence}
     
+    IMPORTANT: You have access to a detailed workflow structure guide that was generated in step 2. 
+    This guide contains specific recommendations for code organization, variable naming, and Pythonic patterns.
+    You MUST follow and implement the guidance provided in this structure guide:
+    {workflow_description}
+    
     Your task is to generate complete, working Python code that:
     1. Implements all the described tools in the correct execution order
-    2. Uses meaningful variable and function names (not Alteryx-style names like df_155_Output)
-    3. Follows Python best practices and pandas conventions
-    4. Includes proper error handling and logging
-    5. Uses Pythonic patterns like method chaining, list comprehensions, and loops where appropriate
-    6. Handles Alteryx-specific patterns that need Python equivalents
-    7. Produces a complete, runnable Python script
+    2. Follows the specific code structure and organization recommendations from the workflow guide
+    3. Uses the suggested variable and function names from the workflow guide
+    4. Implements the Pythonic patterns and optimizations suggested in the workflow guide
+    5. Follows Python best practices and pandas conventions
+    6. Includes proper error handling and logging
+    7. Handles Alteryx-specific patterns that need Python equivalents
+    8. Produces a complete, runnable Python script
     
     Requirements:
-    - Use descriptive variable names (e.g., 'customer_data_df', 'sales_data_df', 'merged_data_df')
-    - Organize code into logical functions
+    - Strictly follow the workflow structure guide recommendations
+    - Use the suggested variable names and function organization from the guide
+    - Implement the Pythonic patterns and optimizations outlined in the guide
     - Include all necessary import statements
     - Add appropriate comments explaining the logic
     - Handle data types and conversions properly
@@ -421,17 +501,16 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
     
     Generate a complete Python script that includes:
     1. Import statements
-    2. Function definitions for different phases
+    2. Function definitions following the workflow guide structure
     3. Main execution logic
-    4. Proper variable management
-    5. Error handling
-    6. Comments explaining the business logic
+    4. Proper variable management using suggested names
+    5. Comments explaining the business logic
     
     Provide only the complete Python code below (no markdown formatting, just pure Python code):
     """
 
     prompt = PromptTemplate(
-        input_variables=["all_descriptions", "extra_user_instructions", "execution_sequence"],
+        input_variables=["all_descriptions", "extra_user_instructions", "execution_sequence", "workflow_description"],
         template=template
     )
 
@@ -441,13 +520,15 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
     final_python_code = chain.run(
         all_descriptions=all_descriptions,
         extra_user_instructions=extra_user_instructions,
-        execution_sequence=execution_sequence
+        execution_sequence=execution_sequence,
+        workflow_description=workflow_description
     ).strip()
 
     full_prompt = prompt.format(
         all_descriptions=all_descriptions,
         extra_user_instructions=extra_user_instructions,
-        execution_sequence=execution_sequence
+        execution_sequence=execution_sequence,
+        workflow_description=workflow_description
     )
 
     return final_python_code, full_prompt 

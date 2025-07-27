@@ -237,6 +237,14 @@ st.sidebar.header("🔑 Step 2 - Upload OpenAI API Key")
 # Input for the OpenAI API key.
 api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 
+# Model selection
+st.sidebar.header("🤖 Step 3 - Select Model")
+model_selection = st.sidebar.selectbox(
+    "Choose AI Model",
+    options=["gpt-4.1","gpt-4o", "gpt-4o-mini", "o1", "o3-mini-high"],
+    index=0,
+    help="Select the AI model to use for code generation. o1 and o3-mini-high are more advanced models that may provide better results."
+)
 
 st.sidebar.markdown("---")
 st.sidebar.header("Helpers")
@@ -340,6 +348,7 @@ st.markdown("""
     <ol style="margin: 0; padding-left: 1.5rem;">
         <li><strong>Upload a .yxmd file</strong> in the sidebar.</li>
         <li><strong>Enter your OpenAI API Key</strong> (required for all operations).</li>
+        <li><strong>Select your preferred AI model</strong> (gpt-4o, gpt-4o-mini, o1, or o3-mini-high).</li>
         <li><strong>(Optional) Enter a Container Tool ID</strong> and click "Fetch Child Tool IDs" to get child tools for that container.</li>
         <li><strong>Provide your Tool IDs</strong> in the main text box (comma-separated).</li>
         <li><strong>Choose your desired output</strong> using the tabs above:
@@ -430,7 +439,7 @@ with tab1:
                 st.write(f"Tool IDs ordered has been adjusted based on execution sequence.")
                 progress_bar.progress(0.1)
 
-                df_generated_code = prompt_helper.generate_python_code_from_alteryx_df(test_df, df_connections, progress_bar, message_placeholder)
+                df_generated_code = prompt_helper.generate_python_code_from_alteryx_df(test_df, df_connections, progress_bar, message_placeholder, model=model_selection)
 
                 # If "tool_id" is missing in df_generated_code, insert it
                 if "tool_id" not in df_generated_code.columns:
@@ -440,13 +449,13 @@ with tab1:
                 message_placeholder.write("**Working on combining code snippets...**")
 
                 # Combine code snippets for the specified tools.
-                final_script, prompt = prompt_helper.combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence=ordered_tool_ids, extra_user_instructions=extra_user_instructions)
+                final_script, prompt = prompt_helper.combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence=ordered_tool_ids, extra_user_instructions=extra_user_instructions, model=model_selection)
                 message_placeholder.write("**Finished generating code!**")
                 progress_bar.progress(1.0)
                 st.success("Conversion succeeded! Scroll down to see your Python code.")
                 st.code(final_script, language="python")
                 st.header("Following a prompt was used to generate the code:")
-                st.write("This app is using gpt-4o, if want better result. Please use following prompt in ChatGPT app with o1 or o3-mini-high model")
+                st.write(f"This app is using {model_selection}, if you want better results, you can try using o1 or o3-mini-high models.")
                 st.code(prompt, language="python")
                 
                 # Save to history
@@ -456,6 +465,7 @@ with tab1:
                 history_item = {
                     'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
                     'type': 'Python Code Generation',
+                    'model_used': model_selection,
                     'tool_ids': ', '.join(tool_ids),
                     'extra_instructions': extra_user_instructions,
                     'output': final_script,
@@ -526,7 +536,7 @@ with tab2:
                     
                     # Generate descriptions for only the specified tools
                     df_descriptions = description_generator.generate_tool_descriptions(
-                        test_df, df_connections, progress_bar, message_placeholder
+                        test_df, df_connections, progress_bar, message_placeholder, model=model_selection
                     )
                     
                     st.success("✅ Tool descriptions generated successfully!")
@@ -551,7 +561,8 @@ with tab2:
                             tool_ids, 
                             df_descriptions, 
                             execution_sequence=", ".join(ordered_tool_ids),
-                            extra_user_instructions=extra_user_instructions
+                            extra_user_instructions=extra_user_instructions,
+                            model=model_selection
                         )
                     
                     st.success("✅ Python code structure guide generated successfully!")
@@ -569,7 +580,9 @@ with tab2:
                             tool_ids, 
                             df_descriptions, 
                             execution_sequence=", ".join(ordered_tool_ids),
-                            extra_user_instructions=extra_user_instructions
+                            extra_user_instructions=extra_user_instructions,
+                            workflow_description=workflow_description,
+                            model=model_selection
                         )
                     
                     st.success("✅ Final Python code generated successfully!")
@@ -640,6 +653,7 @@ with tab2:
 
 Generated by Alteryx to Python Converter
 Date: {time.strftime("%Y-%m-%d %H:%M:%S")}
+Model Used: {model_selection}
 Tool IDs: {', '.join(tool_ids)}
 
 ## 📋 Tool Descriptions
@@ -707,6 +721,7 @@ Tool IDs: {', '.join(tool_ids)}
                 history_item = {
                     'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
                     'type': 'Complete Python Workflow',
+                    'model_used': model_selection,
                     'tool_ids': ', '.join(tool_ids),
                     'extra_instructions': extra_user_instructions,
                     'tool_descriptions': descriptions_text,
@@ -739,12 +754,15 @@ with tab3:
         sorted_history = sorted(st.session_state.generation_history, key=lambda x: x['timestamp'], reverse=True)
         
         for i, history_item in enumerate(sorted_history):
-            with st.expander(f"📅 {history_item['timestamp']} - {history_item['type']} - Tools: {history_item['tool_ids']}", expanded=False):
+            model_info = f" - Model: {history_item.get('model_used', 'N/A')}" if 'model_used' in history_item else ""
+            with st.expander(f"📅 {history_item['timestamp']} - {history_item['type']}{model_info} - Tools: {history_item['tool_ids']}", expanded=False):
                 col1, col2 = st.columns([3, 1])
                 
                 with col1:
                     st.markdown(f"**Type:** {history_item['type']}")
                     st.markdown(f"**Tool IDs:** {history_item['tool_ids']}")
+                    if history_item.get('model_used'):
+                        st.markdown(f"**Model Used:** {history_item['model_used']}")
                     if history_item.get('extra_instructions'):
                         st.markdown(f"**Extra Instructions:** {history_item['extra_instructions']}")
                 
@@ -755,6 +773,7 @@ with tab3:
 
 Generated by Alteryx to Python Converter
 Date: {history_item['timestamp']}
+Model Used: {history_item.get('model_used', 'N/A')}
 Tool IDs: {history_item['tool_ids']}
 
 ## 📋 Tool Descriptions

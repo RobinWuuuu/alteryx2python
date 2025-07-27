@@ -57,7 +57,7 @@ def create_tool_io_template(df_connections, tool_id):
     return template_text
 
 
-def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=None, message_placeholder=None):
+def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=None, message_placeholder=None, model="gpt-4o"):
     """
     Convert Alteryx tool configurations in a DataFrame to equivalent Python code,
     incorporating I/O details so the LLM knows which dataframes are expected.
@@ -90,7 +90,7 @@ def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=
     )
 
     # Initialize the ChatOpenAI LLM using your chosen model.
-    llm = ChatOpenAI(temperature=0, model_name="gpt-4o")
+    llm = ChatOpenAI(temperature=0, model_name=model)
 
     # Create the LangChain LLMChain.
     chain = LLMChain(llm=llm, prompt=prompt_template)
