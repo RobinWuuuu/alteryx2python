@@ -241,7 +241,7 @@ api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 st.sidebar.header("🤖 Step 3 - Select Model")
 model_selection = st.sidebar.selectbox(
     "Choose AI Model",
-    options=["gpt-4.1","gpt-4o", "gpt-4o-mini", "o1", "o3-mini-high"],
+    options=["gpt-5", "gpt-5-mini", "gpt-4.1","gpt-4o", "gpt-4o-mini", "o1", "o3-mini-high"],
     index=0,
     help="Select the AI model to use for code generation. o1 and o3-mini-high are more advanced models that may provide better results."
 )
