@@ -5,10 +5,43 @@ print(os.getcwd())
 
 from code.traverse_helper import get_input_name, get_output_name
 import pandas as pd
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from openai import OpenAI
+
 from code.ToolContextDictionary import comprehensive_guide
+
+# Use the new Responses API (v1/responses) for all models - supports Codex and chat models.
+# See: https://developers.openai.com/api/docs/guides/migrate-to-responses
+
+# Models that do not support the temperature parameter (e.g. Codex); omit it for these.
+MODELS_WITHOUT_TEMPERATURE = frozenset((
+    "gpt-5.1-codex", "gpt-5.1-codex-mini", "gpt-5.1-codex-max",
+))
+
+
+def _call_responses_api(model, temperature, input_text, instructions=None):
+    """
+    Call OpenAI Responses API (v1/responses). Works with all models including Codex.
+    Omits temperature for models that don't support it (e.g. Codex).
+    """
+    client = OpenAI()
+    kwargs = {
+        "model": model,
+        "input": input_text,
+    }
+    if instructions:
+        kwargs["instructions"] = instructions
+    # Only pass temperature for models that support it (Codex does not).
+    if temperature is not None and model not in MODELS_WITHOUT_TEMPERATURE:
+        kwargs["temperature"] = temperature
+    response = client.responses.create(**kwargs)
+    return (response.output_text or "").strip()
+
+
+def _call_responses_api_from_prompt_template(prompt_template, model, temperature, **template_vars):
+    """Format a PromptTemplate with template_vars and call the Responses API (input = full prompt)."""
+    full_prompt = prompt_template.format(**template_vars)
+    return _call_responses_api(model, temperature, full_prompt)
 import streamlit as st
 
 
@@ -57,14 +90,18 @@ def create_tool_io_template(df_connections, tool_id):
     return template_text
 
 
-def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=None, message_placeholder=None, model="gpt-4o"):
+def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=None, message_placeholder=None, model="gpt-4o", temperature=0.0):
     """
     Convert Alteryx tool configurations in a DataFrame to equivalent Python code,
     incorporating I/O details so the LLM knows which dataframes are expected.
 
     Parameters:
         df_nodes (pd.DataFrame): DataFrame containing columns 'tool_id', 'tool_type', and 'text'.
+        df_connections (pd.DataFrame): DataFrame containing tool connections.
         progress_bar (st.progress): Optional Streamlit progress bar to update during processing.
+        message_placeholder: Optional message placeholder widget for UI feedback.
+        model (str): The LLM model to use for code generation.
+        temperature (float): Temperature parameter for LLM responses (0.0-2.0).
 
     Returns:
         pd.DataFrame: A DataFrame with columns 'tool_id', 'tool_type', and 'python_code'.
@@ -89,17 +126,11 @@ def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=
         template=template
     )
 
-    # Initialize the ChatOpenAI LLM using your chosen model.
-    llm = ChatOpenAI(temperature=0, model_name=model)
-
-    # Create the LangChain LLMChain.
-    chain = LLMChain(llm=llm, prompt=prompt_template)
-
     results = []
     total_tools = len(df_nodes)  # Total number of tools to process
     rest_tools = total_tools
     progress_value = 0.05  # Initial progress value
-    # Process each node in the DataFrame.
+    # Process each node in the DataFrame (using Responses API).
     for index, row in df_nodes.iterrows():
         tool_name = row["tool_type"]
         # Inject additional instructions if available in the dictionary.
@@ -110,12 +141,13 @@ def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=
         # Create the I/O description using the helper function.
         io_info = create_tool_io_template(df_connections, row["tool_id"])
 
-        generated_code = chain.run(
+        generated_code = _call_responses_api_from_prompt_template(
+            prompt_template, model, temperature,
             tool_type=row["tool_type"],
             config_text=row["text"],
             io_info=io_info,
-            additional_instructions=additional_instructions
-        ).strip()
+            additional_instructions=additional_instructions,
+        )
 
         results.append({
             "tool_id": row["tool_id"],
@@ -131,13 +163,14 @@ def generate_python_code_from_alteryx_df(df_nodes, df_connections, progress_bar=
 
         rest_tools -= 1
         # Update message_placeholder
-        message_placeholder.write(
-            f"**Generating code for {rest_tools} tool(s), it may take {rest_tools * 4} seconds...**")
+        if message_placeholder is not None:
+            message_placeholder.write(
+                f"**Generating code for {rest_tools} tool(s), it may take {rest_tools * 4} seconds...**")
 
     return pd.DataFrame(results)
 
 
-def combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence="",extra_user_instructions="", model="gpt-4o"):
+def combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence="",extra_user_instructions="", model="gpt-4o", temperature=0.0):
     """
     Combine the Python code for multiple tool IDs into a single script using an LLM.
 
@@ -146,7 +179,10 @@ def combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence
         df_generated_code (pd.DataFrame): DataFrame containing columns:
                                           'tool_id' and 'python_code'.
                                           Each row holds Python code for a particular tool.
+        execution_sequence (str): The execution order of tools.
         extra_user_instructions (str): Additional instructions for the code generation.
+        model (str): The LLM model to use for code generation.
+        temperature (float): Temperature parameter for LLM responses (0.0-2.0).
     Returns:
         str: A single string with the merged Python code.
     """
@@ -195,13 +231,13 @@ def combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence
         template=template
     )
 
-    # 3) Initialize the LLM and chain. Adjust your model or temperature as needed.
-    #    For example, using a hypothetical "gpt-4o-mini" model from your environment:
-    llm = ChatOpenAI(temperature=0, model_name=model)
-    chain = LLMChain(llm=llm, prompt=prompt)
-
-    # 4) Run the chain to combine the code.
-    merged_code = chain.run(all_tool_code=all_tool_code, execution_sequence=execution_sequence, extra_user_instructions=extra_user_instructions).strip()
+    # 3) Call Responses API to combine the code.
+    merged_code = _call_responses_api_from_prompt_template(
+        prompt, model, temperature,
+        all_tool_code=all_tool_code,
+        execution_sequence=execution_sequence,
+        extra_user_instructions=extra_user_instructions,
+    )
 
     full_prompt = prompt.format(
         all_tool_code=all_tool_code,

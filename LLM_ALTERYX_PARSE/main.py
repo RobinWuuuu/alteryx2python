@@ -237,13 +237,43 @@ st.sidebar.header("🔑 Step 2 - Upload OpenAI API Key")
 # Input for the OpenAI API key.
 api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 
-# Model selection
-st.sidebar.header("🤖 Step 3 - Select Model")
-model_selection = st.sidebar.selectbox(
-    "Choose AI Model",
-    options=["gpt-4.1","gpt-4o", "gpt-4o-mini", "o1", "o3-mini-high", "gpt-5", "gpt-5-mini"],
+# Model selection - three models for different stages
+MODEL_OPTIONS = [
+    "gpt-4.1", "gpt-4o", "gpt-4o-mini", "o1", "o3-mini-high",
+    "gpt-5", "gpt-5.2", "gpt-5-mini",
+    "gpt-5.1-codex", "gpt-5.1-codex-mini", "gpt-5.1-codex-max",
+]
+st.sidebar.header("🤖 Step 3 - Select Models")
+code_generate_model = st.sidebar.selectbox(
+    "Code Generate Model (fast, per-tool)",
+    options=MODEL_OPTIONS,
     index=0,
-    help="Select the AI model to use for code generation. gpt-4.1 are recommended. gpt-5 and gpt-5-mini are the latest models with better performance but might not yet available."
+    key="code_generate_model",
+    help="Used for generating Python code from each Alteryx tool. Choose a fast model (e.g. gpt-4o-mini, gpt-5.1-codex-mini).",
+)
+reasoning_model = st.sidebar.selectbox(
+    "Reasoning Model (descriptions & structure)",
+    options=MODEL_OPTIONS,
+    index=0,
+    key="reasoning_model",
+    help="Used for tool descriptions, code structure guide, and final code in the Complete Python Workflow. Choose a capable model (e.g. gpt-4o, o1, gpt-5).",
+)
+code_combine_model = st.sidebar.selectbox(
+    "Code Combine Model (high quality)",
+    options=MODEL_OPTIONS,
+    index=0,
+    key="code_combine_model",
+    help="Used for combining code snippets into the final script. Choose a high-quality model (e.g. gpt-4o, o1, gpt-5).",
+)
+
+# Temperature selection
+temperature = st.sidebar.slider(
+    "Temperature",
+    min_value=0.0,
+    max_value=2.0,
+    value=0.0,
+    step=0.1,
+    help="Controls randomness in the AI responses. Lower values (0.0-0.3) make responses more focused and deterministic. Higher values (0.7-1.0) make responses more creative and varied."
 )
 
 st.sidebar.markdown("---")
@@ -439,7 +469,7 @@ with tab1:
                 st.write(f"Tool IDs ordered has been adjusted based on execution sequence.")
                 progress_bar.progress(0.1)
 
-                df_generated_code = prompt_helper.generate_python_code_from_alteryx_df(test_df, df_connections, progress_bar, message_placeholder, model=model_selection)
+                df_generated_code = prompt_helper.generate_python_code_from_alteryx_df(test_df, df_connections, progress_bar, message_placeholder, model=code_generate_model, temperature=temperature)
 
                 # If "tool_id" is missing in df_generated_code, insert it
                 if "tool_id" not in df_generated_code.columns:
@@ -449,13 +479,13 @@ with tab1:
                 message_placeholder.write("**Working on combining code snippets...**")
 
                 # Combine code snippets for the specified tools.
-                final_script, prompt = prompt_helper.combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence=ordered_tool_ids, extra_user_instructions=extra_user_instructions, model=model_selection)
+                final_script, prompt = prompt_helper.combine_python_code_of_tools(tool_ids, df_generated_code, execution_sequence=ordered_tool_ids, extra_user_instructions=extra_user_instructions, model=code_combine_model, temperature=temperature)
                 message_placeholder.write("**Finished generating code!**")
                 progress_bar.progress(1.0)
                 st.success("Conversion succeeded! Scroll down to see your Python code.")
                 st.code(final_script, language="python")
                 st.header("Following a prompt was used to generate the code:")
-                st.write(f"This app is using {model_selection}, if you want better results, you can try using o1 or o3-mini-high models.")
+                st.write(f"Code generation: **{code_generate_model}**. Code combine: **{code_combine_model}**. For better results, try o1 or o3-mini-high for the combine step.")
                 st.code(prompt, language="python")
                 
                 # Save to history
@@ -465,7 +495,8 @@ with tab1:
                 history_item = {
                     'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
                     'type': 'Python Code Generation',
-                    'model_used': model_selection,
+                    'model_used': f"Code Gen: {code_generate_model}, Combine: {code_combine_model}",
+                    'temperature': temperature,
                     'tool_ids': ', '.join(tool_ids),
                     'extra_instructions': extra_user_instructions,
                     'output': final_script,
@@ -536,7 +567,7 @@ with tab2:
                     
                     # Generate descriptions for only the specified tools
                     df_descriptions = description_generator.generate_tool_descriptions(
-                        test_df, df_connections, progress_bar, message_placeholder, model=model_selection
+                        test_df, df_connections, progress_bar, message_placeholder, model=reasoning_model, temperature=temperature
                     )
                     
                     st.success("✅ Tool descriptions generated successfully!")
@@ -562,7 +593,8 @@ with tab2:
                             df_descriptions, 
                             execution_sequence=", ".join(ordered_tool_ids),
                             extra_user_instructions=extra_user_instructions,
-                            model=model_selection
+                            model=reasoning_model,
+                            temperature=temperature
                         )
                     
                     st.success("✅ Python code structure guide generated successfully!")
@@ -582,7 +614,8 @@ with tab2:
                             execution_sequence=", ".join(ordered_tool_ids),
                             extra_user_instructions=extra_user_instructions,
                             workflow_description=workflow_description,
-                            model=model_selection
+                            model=reasoning_model,
+                            temperature=temperature
                         )
                     
                     st.success("✅ Final Python code generated successfully!")
@@ -653,7 +686,8 @@ with tab2:
 
 Generated by Alteryx to Python Converter
 Date: {time.strftime("%Y-%m-%d %H:%M:%S")}
-Model Used: {model_selection}
+Reasoning Model: {reasoning_model}
+Temperature: {temperature}
 Tool IDs: {', '.join(tool_ids)}
 
 ## 📋 Tool Descriptions
@@ -721,7 +755,8 @@ Tool IDs: {', '.join(tool_ids)}
                 history_item = {
                     'timestamp': time.strftime("%Y-%m-%d %H:%M:%S"),
                     'type': 'Complete Python Workflow',
-                    'model_used': model_selection,
+                    'model_used': f"Reasoning: {reasoning_model}",
+                    'temperature': temperature,
                     'tool_ids': ', '.join(tool_ids),
                     'extra_instructions': extra_user_instructions,
                     'tool_descriptions': descriptions_text,
@@ -755,7 +790,8 @@ with tab3:
         
         for i, history_item in enumerate(sorted_history):
             model_info = f" - Model: {history_item.get('model_used', 'N/A')}" if 'model_used' in history_item else ""
-            with st.expander(f"📅 {history_item['timestamp']} - {history_item['type']}{model_info} - Tools: {history_item['tool_ids']}", expanded=False):
+            temp_info = f" - Temp: {history_item.get('temperature', 'N/A')}" if 'temperature' in history_item else ""
+            with st.expander(f"📅 {history_item['timestamp']} - {history_item['type']}{model_info}{temp_info} - Tools: {history_item['tool_ids']}", expanded=False):
                 col1, col2 = st.columns([3, 1])
                 
                 with col1:
@@ -763,6 +799,8 @@ with tab3:
                     st.markdown(f"**Tool IDs:** {history_item['tool_ids']}")
                     if history_item.get('model_used'):
                         st.markdown(f"**Model Used:** {history_item['model_used']}")
+                    if history_item.get('temperature'):
+                        st.markdown(f"**Temperature:** {history_item['temperature']}")
                     if history_item.get('extra_instructions'):
                         st.markdown(f"**Extra Instructions:** {history_item['extra_instructions']}")
                 
@@ -774,6 +812,7 @@ with tab3:
 Generated by Alteryx to Python Converter
 Date: {history_item['timestamp']}
 Model Used: {history_item.get('model_used', 'N/A')}
+Temperature: {history_item.get('temperature', 'N/A')}
 Tool IDs: {history_item['tool_ids']}
 
 ## 📋 Tool Descriptions

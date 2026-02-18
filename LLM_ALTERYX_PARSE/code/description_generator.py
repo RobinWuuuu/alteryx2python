@@ -1,10 +1,9 @@
 import pandas as pd
 import time
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 from code.ToolContextDictionary import comprehensive_guide
 from code.traverse_helper import get_input_name, get_output_name
+from code.prompt_helper import _call_responses_api_from_prompt_template
 
 
 def create_tool_io_description(df_connections, tool_id):
@@ -41,7 +40,7 @@ def create_tool_io_description(df_connections, tool_id):
     return input_desc + output_desc
 
 
-def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, message_placeholder=None, model="gpt-4o"):
+def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, message_placeholder=None, model="gpt-4o", temperature=0.0):
     """
     Convert Alteryx tool configurations into detailed technical descriptions for Python code generation.
     
@@ -50,6 +49,8 @@ def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, mess
         df_connections (pd.DataFrame): DataFrame containing connection information.
         progress_bar (st.progress): Optional Streamlit progress bar to update during processing.
         message_placeholder: Optional Streamlit placeholder for status messages.
+        model (str): The LLM model to use for code generation.
+        temperature (float): Temperature parameter for LLM responses (0.0-2.0).
     
     Returns:
         pd.DataFrame: A DataFrame with columns 'tool_id', 'tool_type', and 'description'.
@@ -66,102 +67,44 @@ def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, mess
     Additional context: {additional_context}
     
     Instructions:
-    1. Provide a detailed technical description that captures ALL parameters and logic needed for Python implementation
-    2. Include specific column names, data types, filter values, join conditions, etc.
-    3. Specify input and output dataframe names clearly
-    4. For filters: include exact filter conditions, values, AND/OR logic, data types
-    5. For joins: specify join type (inner, left, right, outer), join columns, and any additional conditions
-    6. For transformations: include exact formulas, calculations, new column names
-    7. For aggregations: specify group-by columns, aggregation functions, new column names
-    8. For data types: mention any type conversions or casting operations
-    9. For sorting: specify sort columns and order (ascending/descending)
-    10. For unique operations: specify which columns determine uniqueness
-    
-    Format your response as:
-    
+    - Provide a concise, detailed technical description with all information necessary for Python implementation.
+    - Clearly specify input and output dataframe names, operation type, and key parameters (columns, filters, joins, transformations, etc.).
+    - For each operation, include only relevant configuration needed for generating Python code (e.g., filter logic, join keys/type, aggregation functions, sorting).
+    - Mention data types, conversions, or unique constraints if applicable.
+    - Use clear, non-redundant bullet points or short paragraphs.
+    - Where helpful, provide brief Python snippets or patterns to illustrate translation to pandas code.
+    - Exclude information not relevant to code generation or implementation details not used in Python.
+
+    Example response:
     ## Tool {tool_id} ({tool_type})
-    
-    ### Tool Purpose
-    [Brief business purpose in 1-2 sentences]
-    
-    ### Technical Details
-    - **Input Dataframe(s)**: [exact dataframe names]
-    - **Output Dataframe**: [exact output name]
-    - **Operation Type**: [filter/join/transform/aggregate/etc.]
-    
-    ### Specific Parameters
-    [List all specific parameters found in the configuration]
-    - **Columns Used**: [exact column names]
-    - **Filter Conditions**: [if applicable, include exact values and logic]
-    - **Join Criteria**: [if applicable, include join type and columns]
-    - **Transformations**: [if applicable, include exact formulas]
-    - **Data Types**: [if applicable, include type conversions]
-    - **Sort Order**: [if applicable, include columns and direction]
-    - **Aggregation**: [if applicable, include functions and group-by columns]
-    
-    ### Python Implementation Notes
-    [Any specific notes for Python implementation, such as pandas functions to use, parameter names, etc.]
-    
-    Example detailed descriptions:
-    
-    For a Filter tool:
-    ## Tool 583 (Filter)
-    
-    ### Tool Purpose
-    Filters customer data to include only high-value customers.
-    
-    ### Technical Details
-    - **Input Dataframe(s)**: df_580_Output
-    - **Output Dataframe**: df_583_Filter
-    - **Operation Type**: filter
-    
-    ### Specific Parameters
-    - **Columns Used**: ['Customer_ID', 'Total_Sales', 'Region']
-    - **Filter Conditions**: 
-      - Total_Sales > 10000 (numeric comparison)
-      - Region IN ['North', 'South'] (string comparison with multiple values)
-      - Logic: AND (both conditions must be true)
-    - **Data Types**: Total_Sales is numeric, Region is string
-    
-    ### Python Implementation Notes
-    Use pandas boolean indexing with & operator for AND logic. Filter on Total_Sales > 10000 AND Region.isin(['North', 'South']).
-    
-    For a Join tool:
-    ## Tool 585 (Join)
-    
-    ### Tool Purpose
-    Joins customer data with order data to create a comprehensive customer order view.
-    
-    ### Technical Details
-    - **Input Dataframe(s)**: df_580_Output (left), df_582_Output (right)
-    - **Output Dataframe**: df_585_Join
-    - **Operation Type**: join
-    
-    ### Specific Parameters
-    - **Join Type**: Left Join
-    - **Join Columns**: Customer_ID (left) = Customer_ID (right)
-    - **Additional Conditions**: None
-    - **Columns Used**: All columns from both dataframes
-    
-    ### Python Implementation Notes
-    Use pandas merge() with how='left', left_on='Customer_ID', right_on='Customer_ID'.
-    
-    Important instructions:
-    - Don't explicitly include all parameters of the method, only mention the parameters that are used.
-    - Warning about ignoring alteryx habit like using "Right_" / '*Unknown' (ignored as per instructions; not a real column) is welcome.
-    - Python code snippets are welcome.
-    - Keep all the details for human and model to understand the tool and be able to generate the code, but don't include details don't contributes to the code generation.
-    
-    Provide only the detailed description below:
+
+    ### Purpose
+    [Short business purpose, 1-2 sentences.]
+
+    ### Key Details
+    - Inputs: [dataframe names]
+    - Outputs: [output name(s)]
+    - Operation: [e.g., filter, join, transform, aggregate, etc.]
+    - Parameters:
+        - Columns Used: [...]
+        - Filter/Join/Transform/Aggregation specifics: [exact conditions or formulas, if applicable]
+        - Data Types/Conversions: [as needed]
+
+    [Optional]
+    - Python Example: [Concise code pattern, if instructive]
+
+    Important:
+    - Focus only on details necessary for Python code, omitting unused XML/config parameters.
+    - Warn about ignoring Alteryx-specific quirks (e.g., "Right_" column names) if relevant.
+    - Make sure the description is efficient, clear, and actionable for code generation.
+
+    Provide only the final, non-redundant technical description below.
     """
 
     prompt_template = PromptTemplate(
         input_variables=["tool_id", "tool_type", "config_text", "io_context", "additional_context"],
         template=template
     )
-
-    llm = ChatOpenAI(temperature=0, model_name=model)
-    chain = LLMChain(llm=llm, prompt=prompt_template)
 
     results = []
     total_tools = len(df_nodes)  # This is now the filtered dataframe length
@@ -186,13 +129,14 @@ def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, mess
         io_context = create_tool_io_description(df_connections, row["tool_id"])
 
         try:
-            generated_description = chain.run(
+            generated_description = _call_responses_api_from_prompt_template(
+                prompt_template, model, temperature,
                 tool_id=row["tool_id"],
                 tool_type=row["tool_type"],
                 config_text=config_text,
                 io_context=io_context,
-                additional_context=additional_context
-            ).strip()
+                additional_context=additional_context,
+            )
         except Exception as e:
             error_msg = str(e)
             print(f"Error processing tool {row['tool_id']}: {error_msg}")
@@ -230,7 +174,7 @@ def generate_tool_descriptions(df_nodes, df_connections, progress_bar=None, mess
     return pd.DataFrame(results)
 
 
-def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", extra_user_instructions="", model="gpt-4o"):
+def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", extra_user_instructions="", model="gpt-4o", temperature=0.0):
     """
     Create a comprehensive Python code structure guide from individual tool descriptions.
     
@@ -240,6 +184,7 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
         execution_sequence (str): The execution order of tools.
         extra_user_instructions (str): Additional instructions for the summary.
         model (str): The LLM model to use.
+        temperature (float): Temperature parameter for LLM responses (0.0-2.0).
     
     Returns:
         tuple: (code_structure_guide, full_prompt)
@@ -284,10 +229,8 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     ## Python Code Structure Recommendations
     
     ### Function Organization
-    [Recommend how to group multiple tools into functions]
-    
-    ### Variable Naming Strategy
-    [Suggest meaningful names for dataframes and variables, it could be reasonably long to help understand]
+    [Recommend how to group multiple tools that are related to each other into functions]
+    [Suggest meaningful names for the output of functions (dataframes/variables), it could be reasonably long to help understand]
     
     ### Pythonic Optimizations
     [Identify and call out opportunities for which tools we might be able to combine into a single function, can be concise because we are using python, loops, list comprehensions, functions, etc., e.g., "For tool ID 13,14,15, Use a loop to process multiple files instead of separate tools"]
@@ -295,85 +238,108 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     ### Data Flow Management
     [Explain how to handle data flow between steps, e.g., "Chain operations using method chaining where possible"]
     
-    ## Detailed Implementation Guide
-    
-    ### Phase 1: Data Loading
-    [Specific guidance for data loading tools]
-    - **Function Name**: [suggested function name]
-    - **Variable Names**: [suggested variable names]
-    - **Python Patterns**: [specific Python patterns to use]
-    
-    ### Phase 2: Data Processing
-    [Organize the data processing phase by grouping related tools into logical units, referencing their tool IDs, and suggesting how to combine them into Pythonic functions. For each logic unit, provide the recommended function name, the tool IDs it covers, a brief description, and the actual combined Python code that would implement this logic.]
+    ## Technical Specification: Python Code Structure for Alteryx Workflow Conversion
 
-    Here is an example of how you might structure this section:
+    ### Phase 1: Data Loading and Cleaning (Organized by Data Topic)
 
-    ### Logic Unit 1: Data Cleaning and Preprocessing
-    - **Tools Included**: [e.g., Tool IDs 3, 5, 7, 8]
-    - **Purpose**: These tools perform sequential cleaning steps on the `raw_customer_data` DataFrame, such as removing nulls, standardizing column names, and filtering invalid records. In Python, these can be combined into a single function for clarity and efficiency.
-    - **Suggested Function Name**: `clean_customer_data`
-    - **Combined Code Example**:
+    For the first phase, identify each data topic in the workflow (e.g., customer data, sales data, product data, etc.). For each data topic, all loading, cleaning, and basic transformation steps should be grouped together (possibly within one or more functions per topic). This ensures all relevant preparation for each data source is handled locally and intuitively.
+
+    For each data topic, provide:
+
+    #### Data Topic: [Descriptive Name for Data Topic 1]
+    - **Related Tools**: [List all tool IDs, e.g., 1, 2, 3]
+    - **Description**: Clearly state what this dataset represents and how it is used in the workflow.
+    - **Loading Function Name**: [e.g., `load_and_prepare_customer_data`]
+    - **Input/Output Variable Names**: [e.g., `raw_customer_df`, `cleaned_customer_df`]
+    - **Processing & Python Patterns**: Describe the steps (load data, drop nulls, standardize columns, type conversion, etc.) and mention best practices (e.g., method chaining, explicit type casting).
+    - **Code Example**:
     ```python
-    def clean_customer_data(raw_customer_data):
-        # Remove rows with missing customer_id
-        cleaned = raw_customer_data.dropna(subset=["customer_id"])
-        # Standardize column names
-        cleaned.columns = [col.lower().strip() for col in cleaned.columns]
-        # Filter out inactive customers
-        cleaned = cleaned[cleaned["status"] == "active"]
-        # Remove duplicate records
-        cleaned = cleaned.drop_duplicates()
-        return cleaned
-    ```
-
-    ### Logic Unit 2: Data Joining and Enrichment
-    - **Tools Included**: [e.g., Tool IDs 14, 15, 16]
-    - **Purpose**: These tools join the cleaned customer data with sales and region data. In Python, this can be handled in a single function using `pd.merge` for each join.
-    - **Suggested Function Name**: `enrich_customer_data`
-    - **Combined Code Example**:
-    ```python
-    def enrich_customer_data(cleaned_customers, sales_data, region_data):
-        # Join customer with sales
-        customer_sales = cleaned_customers.merge(sales_data, on="customer_id", how="left")
-        # Join with region info
-        enriched = customer_sales.merge(region_data, on="region_id", how="left")
-        return enriched
-    ```
-
-    ### Logic Unit 3: Aggregation and Feature Engineering
-    - **Tools Included**: [e.g., Tool IDs 21, 22]
-    - **Purpose**: These tools aggregate sales by region and compute summary statistics. Combine these into a single aggregation function.
-    - **Suggested Function Name**: `aggregate_sales_by_region`
-    - **Combined Code Example**:
-    ```python
-    def aggregate_sales_by_region(enriched_data):
-        # Aggregate total sales and customer count by region
-        summary = (
-            enriched_data.groupby("region_name")
-            .agg(total_sales=("sales_amount", "sum"), customer_count=("customer_id", "nunique"))
-            .reset_index()
+    def load_and_prepare_customer_data(filepath):
+        # Load dataset
+        customer_df = pd.read_csv(filepath)
+        # Clean and preprocess
+        customer_df = (
+            customer_df.dropna(subset=["customer_id"])
+            .rename(columns=lambda x: x.lower().strip())
+            .astype({{"customer_id": int}})
+            .drop_duplicates()
         )
-        return summary
+        return customer_df
     ```
 
-    ### Logic Unit 4: Additional Transformations (if any)
-    - **Tools Included**: [e.g., Tool IDs 25, 26]
-    - **Purpose**: Apply any additional formulas or transformations, such as calculating sales per customer.
-    - **Suggested Function Name**: `calculate_sales_per_customer`
-    - **Combined Code Example**:
+    #### Data Topic: [Descriptive Name for Data Topic 2]
+    - **Related Tools**: [e.g., 4, 5, 6]
+    - **Description**: ...
+    - **Loading Function Name**: ...
+    - **Input/Output Variable Names**: ...
+    - **Processing & Python Patterns**: ...
+    - **Code Example**:
     ```python
-    def calculate_sales_per_customer(summary_df):
-        summary_df["sales_per_customer"] = summary_df["total_sales"] / summary_df["customer_count"]
-        return summary_df
+    # Similar structure as above for each data topic
     ```
 
-    [Continue grouping and describing each logic unit in the workflow, referencing the actual tool IDs and showing the combined Python code for each section. This approach results in a modular, readable, and maintainable Python codebase that mirrors the logical structure of the Alteryx workflow.]
-    
+    [Continue for all major data topics identified in the workflow, grouping every tool that loads/cleans/massages each data source.]
+
+    ### Phase 2: Data Processing (Combining and Transforming Data Topics)
+
+    Organize the main data transformation and processing logic into "Processing Units." Each unit should focus on **combining, joining, or further transforming** one or more data topics; these units reflect the main business logic after raw data preparation.
+
+    For each processing unit, provide:
+
+    #### Processing Unit: [Descriptive Name, e.g., Merge Customers and Sales]
+    - **Tools Included**: [e.g., 7, 8, 9]
+    - **Purpose**: High-level description of the logic (e.g., "Join cleaned customer data with sales transactions and filter for 2022 sales.")
+    - **Function Name**: [e.g., `combine_customer_sales`]
+    - **Input/Output Variable Names**: Clearly indicate all inputs and what the output variable should be called (e.g., `cleaned_customer_df`, `sales_df` → `customer_sales_df`).
+    - **Pythonic Patterns**: Recommend method chaining, use of `merge`, aggregation via `groupby.agg`, etc.
+    - **Detailed Steps**: Outline substeps if necessary (e.g., drop/rename columns before/after join, filter criteria, handling left/right join outputs).
+    - **Code Example**:
+    ```python
+    def combine_customer_sales(customers, sales):
+        result = (
+            customers.merge(sales, on="customer_id", how="left")
+            .query("sales_date >= '2022-01-01'")
+        )
+        return result
+    ```
+
+    #### Processing Unit: [e.g., Aggregate Sales by Region]
+    - **Tools Included**: ...
+    - **Purpose**: ...
+    - **Function Name**: ...
+    - **Input/Output Variable Names**: ...
+    - **Pythonic Patterns**: ...
+    - **Detailed Steps**: ...
+    - **Code Example**:
+    ```python
+    # Example here as above
+    ```
+
+    [Continue this format for each further major transformation step or business logic unit, referencing all included tool IDs.]
+
     ### Phase 3: Data Output
-    [Specific guidance for output tools]
-    - **Function Name**: [suggested function name]
-    - **Variable Names**: [suggested variable names]
-    - **Python Patterns**: [specific Python patterns to use]
+
+    For the output phase, specify all logic relating to exporting or saving final results. For each distinct output, provide:
+
+    - **Tools Included**: [e.g., output tool IDs]
+    - **Description**: What does the output represent? Where should it be saved?
+    - **Output Function Name**: [e.g., `export_final_results`]
+    - **Input Variable Name**: [e.g., `final_aggregated_df`]
+    - **Python Patterns**: e.g., `df.to_csv`, `df.to_excel`, robust file naming, error handling.
+    - **Code Example**:
+    ```python
+    def export_final_results(final_df, output_path):
+        final_df.to_csv(output_path, index=False)
+    ```
+
+    [Repeat as necessary for all output steps.]
+
+    ---
+    **General Principles:**
+    - All code sections above should include robust error handling and comments.
+    - Avoid Alteryx-like variable names in function and variable naming; use intuitive business-driven names.
+    - Do **not** introduce column prefixes like "Left_" or "Right_" during joins; instead, pre-rename columns if necessary before joining.
+    - Group code so that data engineers can intuitively work with, extend, or refactor logic relating to each data topic and each core workflow unit.
     
     ## Alteryx to Python Conversions
     
@@ -416,14 +382,12 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
         template=template
     )
 
-    llm = ChatOpenAI(temperature=0, model_name=model)
-    chain = LLMChain(llm=llm, prompt=prompt)
-
-    combined_description = chain.run(
+    combined_description = _call_responses_api_from_prompt_template(
+        prompt, model, temperature,
         all_descriptions=all_descriptions,
         extra_user_instructions=extra_user_instructions,
-        execution_sequence=execution_sequence
-    ).strip()
+        execution_sequence=execution_sequence,
+    )
 
     full_prompt = prompt.format(
         all_descriptions=all_descriptions,
@@ -434,7 +398,7 @@ def combine_tool_descriptions(tool_ids, df_descriptions, execution_sequence="", 
     return combined_description, full_prompt
 
 
-def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="", extra_user_instructions="", workflow_description="", model="gpt-4o"):
+def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="", extra_user_instructions="", workflow_description="", model="gpt-4o", temperature=0.0):
     """
     Generate working Python code by combining detailed tool descriptions and code structure guidance.
     
@@ -445,6 +409,7 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
         extra_user_instructions (str): Additional instructions for the code generation.
         workflow_description (str): The workflow structure guide generated in step 2.
         model (str): The LLM model to use.
+        temperature (float): Temperature parameter for LLM responses (0.0-2.0).
     
     Returns:
         tuple: (final_python_code, full_prompt)
@@ -505,7 +470,7 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
     3. Main execution logic
     4. Proper variable management using suggested names
     5. Comments explaining the business logic
-    
+    Important instructions: Don't generate the code assume it's final. Make sure it's easy to debug and extend. For example, don't run all the functions in a final main function, instead, format the code that we can run it in jupyter notebook, where we can run step by step.
     Provide only the complete Python code below (no markdown formatting, just pure Python code):
     """
 
@@ -514,15 +479,13 @@ def generate_final_python_code(tool_ids, df_descriptions, execution_sequence="",
         template=template
     )
 
-    llm = ChatOpenAI(temperature=0, model_name=model)
-    chain = LLMChain(llm=llm, prompt=prompt)
-
-    final_python_code = chain.run(
+    final_python_code = _call_responses_api_from_prompt_template(
+        prompt, model, temperature,
         all_descriptions=all_descriptions,
         extra_user_instructions=extra_user_instructions,
         execution_sequence=execution_sequence,
-        workflow_description=workflow_description
-    ).strip()
+        workflow_description=workflow_description,
+    )
 
     full_prompt = prompt.format(
         all_descriptions=all_descriptions,
