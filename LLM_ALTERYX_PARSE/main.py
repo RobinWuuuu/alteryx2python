@@ -567,7 +567,7 @@ with tab2:
                     
                     # Generate descriptions for only the specified tools
                     df_descriptions = description_generator.generate_tool_descriptions(
-                        test_df, df_connections, progress_bar, message_placeholder, model=reasoning_model, temperature=temperature
+                        test_df, df_connections, progress_bar, message_placeholder, model=code_generate_model, temperature=temperature
                     )
                     
                     st.success("✅ Tool descriptions generated successfully!")
@@ -614,7 +614,7 @@ with tab2:
                             execution_sequence=", ".join(ordered_tool_ids),
                             extra_user_instructions=extra_user_instructions,
                             workflow_description=workflow_description,
-                            model=reasoning_model,
+                            model=code_combine_model,
                             temperature=temperature
                         )
                     

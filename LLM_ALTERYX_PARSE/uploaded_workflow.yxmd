@@ -1,0 +1,927 @@
+<?xml version="1.0"?>
+<AlteryxDocument yxmdVer="2023.1">
+  <Nodes>
+    <Node ToolID="1">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.DbFileInput.DbFileInput">
+        <Position x="54" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Passwords />
+          <File RecordLimit="" SearchSubDirs="False" FileFormat="0" OutputFileName="">C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv</File>
+          <FormatSpecificOptions>
+            <HeaderRow>True</HeaderRow>
+            <IgnoreErrors>False</IgnoreErrors>
+            <AllowShareWrite>False</AllowShareWrite>
+            <ImportLine>1</ImportLine>
+            <FieldLen>254</FieldLen>
+            <SingleThreadRead>False</SingleThreadRead>
+            <IgnoreQuotes>DoubleQuotes</IgnoreQuotes>
+            <Delimeter>,</Delimeter>
+            <QuoteRecordBreak>False</QuoteRecordBreak>
+            <CodePage>28591</CodePage>
+          </FormatSpecificOptions>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>Employee Roster Data.csv</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="WORKERID" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WEEK_BEGINNING_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FTE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WORKINGFTE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBCOHORTCLASSIFICATIONID" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBCOHORTCLASSIFICATIONNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="HIST_BCG_EMAIL_ADDRESS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="PRIMARYHOMEEMAILADDRESS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="ALLOCATIONNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LOCATIONNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LOCATIONCD" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FULLNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="NAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="PRIMARYWORKEMAILADDRESS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LOCATIONHIERARCHYNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LOCATIONHIERARCHYLEVELNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TERMINATIONDT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TERMINATION_WEEK" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TERMINATEDFLAG" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="REGRETTABLE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="MOST_RECENT_HIREDT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="BUSINESSESNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WORKERTYPE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WORKERSUBTYPE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WORKERSTATUS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="MANAGEMENTLEVELNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBCATEGORYNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBFAMILYNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBFAMILYGROUPNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBTITLE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="BUSINESSTITLE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TIMETYPE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBPROFILENM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="JOBPROFILECLASSIFICATION" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="HOMEOFFICENM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SUPERVISORYORGNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SUPERIORSUPERVISORYORGNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="CD_MEETING_ID" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="CTP_ID" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="MOST_RECENT_HIREAS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="GENDER" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="CURRENT_FLAG" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SUMMER_INTERN" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TERMINATION_TYPE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TERMINATION_REASON" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="YEAR" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="MONTH_OF_YEAR" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WEEK_OF_YEAR" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="WEEK_OF_MONTH" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="HEADCOUNT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="CDX" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="MOX" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="COSTCENTERNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SUPERVISORYORGMANAGER" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="COHORTSTEP" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="ALLOCATEDFTE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LEGALFIRSTNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LEGALLASTNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LEGALMIDDLENAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LEGALNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="PREFEREDFIRSTNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="PREFEREDMIDDLENAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="PREFERREDLASTNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="PAIDFTE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="COUNTRYNAME" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LOCATIONSYSTEM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="COMPANYNM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FIRST_A_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FIRST_C_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FIRST_PR_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FIRST_PL_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FIRST_PT_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="FIRST_MDP_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="APC_FLAG" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="DATEOFBIRTH" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="ORIGINAL_HIRED_AS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="LATERAL_HIRE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="EDUCATIONAL_LEAVE_MBA_SPONSORED" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="EDUCATIONAL_LEAVE_MBA_NON_SPONSORED" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SECONDMENT_TOTAL" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TIER1_PARTICIPANT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SECONDMENT_CLIENT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SECONDMENT_INTERNAL" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="SECONDMENT_GLOBAL" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="TIME_FOR_YOU" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+            <Field name="HAS_SUMMER_INTERNED" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Employee Roster Data.csv" type="V_String" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxDbFileInput" />
+    </Node>
+    <Node ToolID="2">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.DbFileInput.DbFileInput">
+        <Position x="54" y="198" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Passwords />
+          <File RecordLimit="" SearchSubDirs="False" FileFormat="0" OutputFileName="">C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv</File>
+          <FormatSpecificOptions>
+            <HeaderRow>True</HeaderRow>
+            <IgnoreErrors>False</IgnoreErrors>
+            <AllowShareWrite>False</AllowShareWrite>
+            <ImportLine>1</ImportLine>
+            <FieldLen>254</FieldLen>
+            <SingleThreadRead>False</SingleThreadRead>
+            <IgnoreQuotes>DoubleQuotes</IgnoreQuotes>
+            <Delimeter>,</Delimeter>
+            <QuoteRecordBreak>False</QuoteRecordBreak>
+            <CodePage>28591</CodePage>
+          </FormatSpecificOptions>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>CD Placement Data.csv</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="CD_MEETING_ID" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="DATE_FILE_UPDATED" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="DATE_FILE_UPDATE_NEXT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="DATE_ADDED" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="SOURCE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="EMPLOYEE_ID" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="EMAIL" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="CYCLE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="MEETING_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="MEETING_WEEK_BEGINNING_DATE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="MEETING_DATE_IMPUTED" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="DEVELOPMENT_COMMITTEE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="SYSTEM" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="LOCATION" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="LOCATION_ADJUSTED_FLAG" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="APC_FLAG" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="COHORT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="CDX" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="PERFORMANCE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="POTENTIAL" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="MATRIX" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="ON_OFF_TRACK" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="STACK_CLASSIFICATION" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="STACK_NUMERIC_SORT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="STACK_DEI" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="GENDER" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="RACE_ETH_MECE" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="VETERAN" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="DISABILITY" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="LGBT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="MOST_RECENT_HIREDT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+            <Field name="MOST_RECENT_HIREAS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\CD Placement Data.csv" type="V_String" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxDbFileInput" />
+    </Node>
+    <Node ToolID="3">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.DbFileInput.DbFileInput">
+        <Position x="54" y="390" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Passwords />
+          <File RecordLimit="" SearchSubDirs="False" FileFormat="0" OutputFileName="">C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Placement to Bucket Data.csv</File>
+          <FormatSpecificOptions>
+            <HeaderRow>True</HeaderRow>
+            <IgnoreErrors>False</IgnoreErrors>
+            <AllowShareWrite>False</AllowShareWrite>
+            <ImportLine>1</ImportLine>
+            <FieldLen>254</FieldLen>
+            <SingleThreadRead>False</SingleThreadRead>
+            <IgnoreQuotes>DoubleQuotes</IgnoreQuotes>
+            <Delimeter>,</Delimeter>
+            <QuoteRecordBreak>False</QuoteRecordBreak>
+            <CodePage>28591</CodePage>
+          </FormatSpecificOptions>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>Placement to Bucket Data.csv</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="MATRIX" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Placement to Bucket Data.csv" type="V_String" />
+            <Field name="STACK_CLASSIFICATION" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Placement to Bucket Data.csv" type="V_String" />
+            <Field name="BUCKET" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Placement to Bucket Data.csv" type="V_String" />
+            <Field name="COMMENT" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Placement to Bucket Data.csv" type="V_String" />
+            <Field name="DETAILS" size="254" source="File: C:\Users\Wu Robin\Downloads\Performance Downtick Analysis\Placement to Bucket Data.csv" type="V_String" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxDbFileInput" />
+    </Node>
+    <Node ToolID="4">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="150" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="WORKERID" selected="True" />
+            <SelectField field="JOBCOHORTCLASSIFICATIONID" selected="True" />
+            <SelectField field="ALLOCATIONNM" selected="True" />
+            <SelectField field="FULLNAME" selected="True" />
+            <SelectField field="JOBCATEGORYNM" selected="True" />
+            <SelectField field="*Unknown" selected="False" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+    <Node ToolID="5">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Filter.Filter">
+        <Position x="246" y="198" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Mode>Simple</Mode>
+          <Simple>
+            <Operator>=</Operator>
+            <Field>CYCLE</Field>
+            <Operands>
+              <IgnoreTimeInDateTime>True</IgnoreTimeInDateTime>
+              <DateType>fixed</DateType>
+              <PeriodDate>2025-07-26 10:41:08</PeriodDate>
+              <PeriodType>
+              </PeriodType>
+              <PeriodCount>0</PeriodCount>
+              <Operand>Spring 2025</Operand>
+              <StartDate>2025-07-26 10:41:08</StartDate>
+              <EndDate>2025-07-26 10:41:08</EndDate>
+            </Operands>
+          </Simple>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>[CYCLE] = "Spring 2025"</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFilter" />
+    </Node>
+    <Node ToolID="6">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Join.Join">
+        <Position x="390" y="198" />
+      </GuiSettings>
+      <Properties>
+        <Configuration joinByRecordPos="False">
+          <JoinInfo connection="Left">
+            <Field field="MATRIX" />
+          </JoinInfo>
+          <JoinInfo connection="Right">
+            <Field field="MATRIX" />
+          </JoinInfo>
+          <SelectConfiguration>
+            <Configuration outputConnection="Join">
+              <OrderChanged value="False" />
+              <CommaDecimal value="False" />
+              <SelectFields>
+                <SelectField field="Right_MATRIX" selected="True" rename="Right_MATRIX" input="Right_" />
+                <SelectField field="Right_STACK_CLASSIFICATION" selected="True" rename="Right_STACK_CLASSIFICATION" input="Right_" />
+                <SelectField field="*Unknown" selected="True" />
+              </SelectFields>
+            </Configuration>
+          </SelectConfiguration>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxJoin" />
+    </Node>
+    <Node ToolID="7">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Filter.Filter">
+        <Position x="150" y="390" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Mode>Simple</Mode>
+          <Simple>
+            <Operator>=</Operator>
+            <Field>COMMENT</Field>
+            <Operands>
+              <IgnoreTimeInDateTime>True</IgnoreTimeInDateTime>
+              <DateType>fixed</DateType>
+              <PeriodDate>2025-07-26 10:42:31</PeriodDate>
+              <PeriodType>
+              </PeriodType>
+              <PeriodCount>0</PeriodCount>
+              <Operand>CT mapping</Operand>
+              <StartDate>2025-07-26 10:42:31</StartDate>
+              <EndDate>2025-07-26 10:42:31</EndDate>
+            </Operands>
+          </Simple>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>[COMMENT] = "CT mapping"</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFilter" />
+    </Node>
+    <Node ToolID="8">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Filter.Filter">
+        <Position x="246" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Mode>Simple</Mode>
+          <Simple>
+            <Operator>=</Operator>
+            <Field>JOBCATEGORYNM</Field>
+            <Operands>
+              <IgnoreTimeInDateTime>True</IgnoreTimeInDateTime>
+              <DateType>fixed</DateType>
+              <PeriodDate>2025-07-26 10:43:05</PeriodDate>
+              <PeriodType>
+              </PeriodType>
+              <PeriodCount>0</PeriodCount>
+              <Operand>Traditional Consulting</Operand>
+              <StartDate>2025-07-26 10:43:05</StartDate>
+              <EndDate>2025-07-26 10:43:05</EndDate>
+            </Operands>
+          </Simple>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>[JOBCATEGORYNM] = "Traditional Consulting"</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFilter" />
+    </Node>
+    <Node ToolID="9">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Join.Join">
+        <Position x="642" y="126" />
+      </GuiSettings>
+      <Properties>
+        <Configuration joinByRecordPos="False">
+          <JoinInfo connection="Left">
+            <Field field="WORKERID" />
+          </JoinInfo>
+          <JoinInfo connection="Right">
+            <Field field="EMPLOYEE_ID" />
+          </JoinInfo>
+          <SelectConfiguration>
+            <Configuration outputConnection="Join">
+              <OrderChanged value="False" />
+              <CommaDecimal value="False" />
+              <SelectFields>
+                <SelectField field="Right_EMPLOYEE_ID" selected="False" input="Right_" />
+                <SelectField field="*Unknown" selected="True" />
+              </SelectFields>
+            </Configuration>
+          </SelectConfiguration>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxJoin" />
+    </Node>
+    <Node ToolID="11">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="150" y="198" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="EMPLOYEE_ID" selected="True" />
+            <SelectField field="CYCLE" selected="True" />
+            <SelectField field="MEETING_DATE" selected="True" />
+            <SelectField field="PERFORMANCE" selected="True" />
+            <SelectField field="POTENTIAL" selected="True" />
+            <SelectField field="MATRIX" selected="True" />
+            <SelectField field="*Unknown" selected="False" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+    <Node ToolID="12">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="246" y="390" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="STACK_CLASSIFICATION" selected="False" />
+            <SelectField field="COMMENT" selected="False" />
+            <SelectField field="DETAILS" selected="False" />
+            <SelectField field="*Unknown" selected="True" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+    <Node ToolID="13">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Filter.Filter">
+        <Position x="246" y="294" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Mode>Simple</Mode>
+          <Simple>
+            <Operator>=</Operator>
+            <Field>CYCLE</Field>
+            <Operands>
+              <IgnoreTimeInDateTime>True</IgnoreTimeInDateTime>
+              <DateType>fixed</DateType>
+              <PeriodDate>2025-07-26 10:44:58</PeriodDate>
+              <PeriodType>
+              </PeriodType>
+              <PeriodCount>0</PeriodCount>
+              <Operand>Fall 2024</Operand>
+              <StartDate>2025-07-26 10:44:58</StartDate>
+              <EndDate>2025-07-26 10:44:58</EndDate>
+            </Operands>
+          </Simple>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>[CYCLE] = "Fall 2024"</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFilter" />
+    </Node>
+    <Node ToolID="14">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Join.Join">
+        <Position x="390" y="318" />
+      </GuiSettings>
+      <Properties>
+        <Configuration joinByRecordPos="False">
+          <JoinInfo connection="Left">
+            <Field field="MATRIX" />
+          </JoinInfo>
+          <JoinInfo connection="Right">
+            <Field field="MATRIX" />
+          </JoinInfo>
+          <SelectConfiguration>
+            <Configuration outputConnection="Join">
+              <OrderChanged value="False" />
+              <CommaDecimal value="False" />
+              <SelectFields>
+                <SelectField field="Right_MATRIX" selected="True" rename="Right_MATRIX" input="Right_" />
+                <SelectField field="*Unknown" selected="True" />
+              </SelectFields>
+            </Configuration>
+          </SelectConfiguration>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxJoin" />
+    </Node>
+    <Node ToolID="15">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Join.Join">
+        <Position x="858" y="222" />
+      </GuiSettings>
+      <Properties>
+        <Configuration joinByRecordPos="False">
+          <JoinInfo connection="Left">
+            <Field field="WORKERID" />
+          </JoinInfo>
+          <JoinInfo connection="Right">
+            <Field field="EMPLOYEE_ID" />
+          </JoinInfo>
+          <SelectConfiguration>
+            <Configuration outputConnection="Join">
+              <OrderChanged value="False" />
+              <CommaDecimal value="False" />
+              <SelectFields>
+                <SelectField field="Right_EMPLOYEE_ID" selected="False" rename="Right_EMPLOYEE_ID" input="Right_" />
+                <SelectField field="Right_CYCLE" selected="True" rename="Right_CYCLE" input="Right_" />
+                <SelectField field="Right_MEETING_DATE" selected="True" rename="Right_MEETING_DATE" input="Right_" />
+                <SelectField field="Right_BUCKET" selected="True" rename="Right_BUCKET" input="Right_" />
+                <SelectField field="Right_MATRIX" selected="True" rename="Right_MATRIX" input="Right_" />
+                <SelectField field="*Unknown" selected="True" />
+              </SelectFields>
+            </Configuration>
+          </SelectConfiguration>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxJoin" />
+    </Node>
+    <Node ToolID="16">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.BrowseV2.BrowseV2">
+        <Position x="1026" y="222" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <TempFile>C:\Users\WUROBI~1\AppData\Local\Temp\Engine_55856_47577fdba3afdb4daa64d0dfda98ad98_\Engine_55856_d12b629d9dcbfc45804294831a72deee~.yxdb</TempFile>
+          <TempFileDataProfiling />
+          <Layout>
+            <ViewMode>Single</ViewMode>
+            <ViewSize value="100" />
+            <View1>
+              <DefaultTab>Profile</DefaultTab>
+              <Hints>
+                <Table />
+              </Hints>
+            </View1>
+            <View2 />
+          </Layout>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxBrowseV2" />
+    </Node>
+    <Node ToolID="17">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="546" y="198" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="CYCLE" selected="False" />
+            <SelectField field="MEETING_DATE" selected="False" />
+            <SelectField field="PERFORMANCE" selected="True" rename="PERFORMANCE_2025_SPRING" />
+            <SelectField field="POTENTIAL" selected="True" rename="POTENTIAL_2025_SPRING" />
+            <SelectField field="MATRIX" selected="True" rename="MATRIX_2025_SPRING" />
+            <SelectField field="Right_MATRIX" selected="False" />
+            <SelectField field="BUCKET" selected="True" rename="BUCKET_2025_SPRING" />
+            <SelectField field="*Unknown" selected="True" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+    <Node ToolID="18">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="582" y="318" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="CYCLE" selected="False" />
+            <SelectField field="MEETING_DATE" selected="False" />
+            <SelectField field="PERFORMANCE" selected="True" rename="PERFORMANCE_2024_FALL" />
+            <SelectField field="POTENTIAL" selected="True" rename="POTENTIAL_2024_FALL" />
+            <SelectField field="MATRIX" selected="True" rename="MATRIX_2024_FALL" />
+            <SelectField field="Right_MATRIX" selected="False" />
+            <SelectField field="BUCKET" selected="True" rename="BUCKET_2024_FALL" />
+            <SelectField field="*Unknown" selected="True" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+    <Node ToolID="19">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Formula.Formula">
+        <Position x="930" y="222" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <FormulaFields>
+            <FormulaField expression="IF [BUCKET_2025_SPRING] &lt; [BUCKET_2024_FALL] THEN &quot;Lower&quot;&#xA;ELSEIF [BUCKET_2025_SPRING] = [BUCKET_2024_FALL] THEN &quot;Equal&quot;&#xA;ELSE &quot;Higher&quot;&#xA;ENDIF&#xA;" field="DOWNTICK_FLAG" size="1073741823" type="V_WString" />
+          </FormulaFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>DOWNTICK_FLAG = IF [BUCKET_2025_SPRING] &lt; [BUCKET_2024_FALL] THEN "Lower"
+ELSEIF...</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFormula" />
+    </Node>
+    <Node ToolID="20">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Union.Union">
+        <Position x="474" y="198" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <ByName_ErrorMode>Warning</ByName_ErrorMode>
+          <ByName_OutputMode>All</ByName_OutputMode>
+          <Mode>ByName</Mode>
+          <SetOutputOrder value="False" />
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxUnion" />
+    </Node>
+    <Node ToolID="21">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Union.Union">
+        <Position x="486" y="318" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <ByName_ErrorMode>Warning</ByName_ErrorMode>
+          <ByName_OutputMode>All</ByName_OutputMode>
+          <Mode>ByName</Mode>
+          <SetOutputOrder value="False" />
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxUnion" />
+    </Node>
+    <Node ToolID="22">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Union.Union">
+        <Position x="750" y="138" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <ByName_ErrorMode>Warning</ByName_ErrorMode>
+          <ByName_OutputMode>All</ByName_OutputMode>
+          <Mode>ByName</Mode>
+          <SetOutputOrder value="False" />
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxUnion" />
+    </Node>
+    <Node ToolID="23">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Filter.Filter">
+        <Position x="1026" y="162" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Mode>Simple</Mode>
+          <Simple>
+            <Operator>=</Operator>
+            <Field>DOWNTICK_FLAG</Field>
+            <Operands>
+              <IgnoreTimeInDateTime>True</IgnoreTimeInDateTime>
+              <DateType>fixed</DateType>
+              <PeriodDate>2025-08-05 12:28:51</PeriodDate>
+              <PeriodType>
+              </PeriodType>
+              <PeriodCount>0</PeriodCount>
+              <Operand>Lower</Operand>
+              <StartDate>2025-08-05 12:28:51</StartDate>
+              <EndDate>2025-08-05 12:28:51</EndDate>
+            </Operands>
+          </Simple>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>[DOWNTICK_FLAG] = "Lower"</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFilter" />
+    </Node>
+    <Node ToolID="24">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.BrowseV2.BrowseV2">
+        <Position x="1146" y="126" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <TempFile>C:\Users\WUROBI~1\AppData\Local\Temp\Engine_55856_47577fdba3afdb4daa64d0dfda98ad98_\Engine_55856_f93ede001fdc1247a197288634b3bb19~.yxdb</TempFile>
+          <TempFileDataProfiling />
+          <Layout>
+            <ViewMode>Single</ViewMode>
+            <ViewSize value="100" />
+            <View1>
+              <DefaultTab>Profile</DefaultTab>
+              <Hints>
+                <Table />
+              </Hints>
+            </View1>
+            <View2 />
+          </Layout>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxBrowseV2" />
+    </Node>
+  </Nodes>
+  <Connections>
+    <Connection>
+      <Origin ToolID="1" Connection="Output" />
+      <Destination ToolID="4" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="2" Connection="Output" />
+      <Destination ToolID="11" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="3" Connection="Output" />
+      <Destination ToolID="7" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="4" Connection="Output" />
+      <Destination ToolID="8" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="5" Connection="True" />
+      <Destination ToolID="6" Connection="Left" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="12" Connection="Output" />
+      <Destination ToolID="6" Connection="Right" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="6" Connection="Join" />
+      <Destination ToolID="20" Connection="Input" />
+    </Connection>
+    <Connection name="#2">
+      <Origin ToolID="6" Connection="Left" />
+      <Destination ToolID="20" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="7" Connection="True" />
+      <Destination ToolID="12" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="8" Connection="True" />
+      <Destination ToolID="9" Connection="Left" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="17" Connection="Output" />
+      <Destination ToolID="9" Connection="Right" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="9" Connection="Join" />
+      <Destination ToolID="22" Connection="Input" />
+    </Connection>
+    <Connection name="#2">
+      <Origin ToolID="9" Connection="Left" />
+      <Destination ToolID="22" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="11" Connection="Output" />
+      <Destination ToolID="5" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="11" Connection="Output" />
+      <Destination ToolID="13" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="12" Connection="Output" />
+      <Destination ToolID="14" Connection="Right" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="13" Connection="True" />
+      <Destination ToolID="14" Connection="Left" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="14" Connection="Join" />
+      <Destination ToolID="21" Connection="Input" />
+    </Connection>
+    <Connection name="#2">
+      <Origin ToolID="14" Connection="Left" />
+      <Destination ToolID="21" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="15" Connection="Join" />
+      <Destination ToolID="19" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="18" Connection="Output" />
+      <Destination ToolID="15" Connection="Right" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="22" Connection="Output" />
+      <Destination ToolID="15" Connection="Left" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="19" Connection="Output" />
+      <Destination ToolID="16" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="19" Connection="Output" />
+      <Destination ToolID="23" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="20" Connection="Output" />
+      <Destination ToolID="17" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="21" Connection="Output" />
+      <Destination ToolID="18" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="23" Connection="True" />
+      <Destination ToolID="24" Connection="Input" />
+    </Connection>
+  </Connections>
+  <Properties>
+    <Memory default="True" />
+    <GlobalRecordLimit value="0" />
+    <TempFiles default="True" />
+    <Annotation on="True" includeToolName="False" />
+    <ConvErrorLimit value="10" />
+    <ConvErrorLimit_Stop value="False" />
+    <CancelOnError value="False" />
+    <DisableBrowse value="False" />
+    <EnablePerformanceProfiling value="False" />
+    <RunWithE2 value="True" />
+    <PredictiveToolsCodePage value="1252" />
+    <DisableAllOutput value="False" />
+    <ShowAllMacroMessages value="False" />
+    <ShowConnectionStatusIsOn value="True" />
+    <ShowConnectionStatusOnlyWhenRunning value="True" />
+    <ZoomLevel value="0" />
+    <LayoutType>Horizontal</LayoutType>
+    <MetaInfo>
+      <NameIsFileName value="True" />
+      <Name>Performance Downtick Analysis Workflow</Name>
+      <Description />
+      <RootToolName />
+      <ToolVersion />
+      <ToolInDb value="False" />
+      <CategoryName />
+      <SearchTags />
+      <Author />
+      <Company />
+      <Copyright />
+      <DescriptionLink actual="" displayed="" />
+      <Example>
+        <Description />
+        <File />
+      </Example>
+      <WorkflowId value="e510be3e-d1aa-4cfd-a5b3-a045d1c8fe44" />
+      <Telemetry>
+        <PreviousWorkflowId value="15d417af-e240-4a15-82dd-ca30bc218549" />
+        <OriginWorkflowId value="15d417af-e240-4a15-82dd-ca30bc218549" />
+      </Telemetry>
+      <PlatformWorkflowId value="" />
+    </MetaInfo>
+    <Events>
+      <Enabled value="True" />
+    </Events>
+  </Properties>
+</AlteryxDocument>
