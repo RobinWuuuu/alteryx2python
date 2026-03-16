@@ -2,11 +2,12 @@
 api.py — FastAPI backend for Alteryx to Python Converter.
 
 Run with:
-    uvicorn api:app --reload --port 8000
+    uvicorn api:app --reload --port 5201
 """
 
 import asyncio
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -15,11 +16,12 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -27,6 +29,8 @@ from pydantic import BaseModel
 ROOT = Path(__file__).parent.resolve()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 from code import alteryx_parser as parser
 from code import description_generator
@@ -70,14 +74,39 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 # FastAPI app
 # ---------------------------------------------------------------------------
+# Step 2/3 accept large JSON payloads (many tools). If using a reverse proxy
+# (e.g. nginx), set client_max_body_size >= 20MB for /api/convert/advanced/*.
+MAX_ADVANCED_JSON_BODY_MB = 20
+
 app = FastAPI(title="Alteryx to Python API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    allow_origins=["http://localhost:5200", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    """Log request validation failures (422) in detail for debugging."""
+    path = getattr(request, "url", None) and getattr(request.url, "path", "") or request.scope.get("path", "")
+    method = getattr(request, "method", None) or request.scope.get("method", "")
+    body_size = ""
+    if hasattr(request, "headers") and "content-length" in request.headers:
+        body_size = f", Content-Length: {request.headers['content-length']}"
+    errors = exc.errors()
+    logging.warning(
+        "Request validation failed (422): %s %s%s — %d error(s): %s",
+        method,
+        path,
+        body_size,
+        len(errors),
+        json.dumps(errors, indent=2, default=str),
+    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
 
 # ---------------------------------------------------------------------------
 # Available models constant (shared with frontend via GET /api/models)
@@ -131,12 +160,19 @@ class AdvancedStep1Request(BaseModel):
     extra_instructions: str = ""
 
 
+class ToolDescriptionItem(BaseModel):
+    """Per-tool description; tool_id may be str or int, tool_type may be null (coerce in handlers)."""
+    tool_id: Union[str, int]
+    tool_type: Optional[str] = ""
+    description: str
+
+
 class AdvancedStep2Request(BaseModel):
     session_id: str
     config: SessionConfig
     tool_ids: List[str]
     extra_instructions: str = ""
-    tool_descriptions: List[Dict[str, str]]  # [{tool_id, tool_type, description}]
+    tool_descriptions: List[ToolDescriptionItem]
     execution_sequence: str
 
 
@@ -145,7 +181,7 @@ class AdvancedStep3Request(BaseModel):
     config: SessionConfig
     tool_ids: List[str]
     extra_instructions: str = ""
-    tool_descriptions: List[Dict[str, str]]
+    tool_descriptions: List[ToolDescriptionItem]
     execution_sequence: str
     workflow_description: str
 
@@ -291,38 +327,63 @@ def get_models():
 @app.post("/api/upload")
 async def upload_workflow(file: UploadFile = File(...)):
     """Upload a .yxmd/.yxmc file and return a session_id."""
-    if file.filename and not file.filename.lower().endswith((".yxmd", ".yxmc")):
-        raise HTTPException(status_code=400, detail="Only .yxmd or .yxmc files are supported.")
-
-    # Save to a temp file
-    suffix = Path(file.filename).suffix if file.filename else ".yxmd"
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    content = await file.read()
-    tmp.write(content)
-    tmp.close()
-
-    # Parse immediately to validate and get stats
+    tmp_path = None
     try:
-        df_nodes, df_connections = parser.load_alteryx_data(tmp.name)
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file selected.")
+        if not file.filename.lower().endswith((".yxmd", ".yxmc")):
+            raise HTTPException(status_code=400, detail="Only .yxmd or .yxmc files are supported.")
+
+        # Save to a temp file (use binary mode explicitly for Windows)
+        suffix = Path(file.filename).suffix
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode="wb") as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+
+        # Parse immediately to validate and get stats
+        try:
+            df_nodes, df_connections = parser.load_alteryx_data(tmp_path)
+        except Exception as exc:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+            raise HTTPException(status_code=422, detail=f"Failed to parse workflow: {exc}")
+
+        if df_nodes.empty:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+            raise HTTPException(status_code=422, detail="No tools found in the uploaded workflow file.")
+
+        session_id = str(uuid.uuid4())
+        _sessions[session_id] = {"path": tmp_path, "created_at": time.time()}
+
+        tool_types = sorted(df_nodes["tool_type"].dropna().unique().tolist())
+        return {
+            "session_id": session_id,
+            "filename": file.filename,
+            "node_count": len(df_nodes),
+            "connection_count": len(df_connections),
+            "tool_types": tool_types,
+        }
+    except HTTPException:
+        raise
     except Exception as exc:
-        os.remove(tmp.name)
-        raise HTTPException(status_code=422, detail=f"Failed to parse workflow: {exc}")
-
-    if df_nodes.empty:
-        os.remove(tmp.name)
-        raise HTTPException(status_code=422, detail="No tools found in the uploaded workflow file.")
-
-    session_id = str(uuid.uuid4())
-    _sessions[session_id] = {"path": tmp.name, "created_at": time.time()}
-
-    tool_types = sorted(df_nodes["tool_type"].dropna().unique().tolist())
-    return {
-        "session_id": session_id,
-        "filename": file.filename,
-        "node_count": len(df_nodes),
-        "connection_count": len(df_connections),
-        "tool_types": tool_types,
-    }
+        logging.exception("Upload failed")
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upload failed: {exc}. Check server logs for traceback.",
+        )
 
 
 @app.post("/api/sequence")
@@ -445,6 +506,11 @@ async def advanced_step1(req: AdvancedStep1Request):
 
         progress_bar.progress(1.0)
         descriptions = df_descriptions.to_dict(orient="records")
+        # Normalize so frontend always receives string IDs (avoids 422 on step 2 with many tools)
+        descriptions = [
+            {"tool_id": str(r["tool_id"]), "tool_type": str(r["tool_type"]), "description": r["description"]}
+            for r in descriptions
+        ]
         return {
             "descriptions": descriptions,
             "ordered_tool_ids": [str(t) for t in ordered_tool_ids],
@@ -463,7 +529,9 @@ async def advanced_step2(req: AdvancedStep2Request):
     tool_ids = _parse_tool_ids(req.tool_ids)
     import pandas as pd
 
-    df_descriptions = pd.DataFrame(req.tool_descriptions)
+    # Coerce tool_id to str, tool_type to str (JSON may send numeric IDs or null tool_type)
+    rows = [{"tool_id": str(d.tool_id), "tool_type": d.tool_type or "", "description": d.description} for d in req.tool_descriptions]
+    df_descriptions = pd.DataFrame(rows)
 
     loop = asyncio.get_event_loop()
 
@@ -478,7 +546,20 @@ async def advanced_step2(req: AdvancedStep2Request):
         )
         return workflow_description, workflow_prompt
 
-    workflow_description, workflow_prompt = await loop.run_in_executor(None, _work)
+    try:
+        workflow_description, workflow_prompt = await loop.run_in_executor(None, _work)
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "context" in err_msg or "token" in err_msg:
+            raise HTTPException(
+                status_code=400,
+                detail=f"LLM context length exceeded. Try a long-context model (e.g. gpt-4.1) or reduce workflow size. {e!s}",
+            )
+        if "rate" in err_msg or "429" in err_msg:
+            raise HTTPException(status_code=429, detail=f"Rate limit exceeded: {e!s}")
+        logging.exception("Step 2 LLM call failed")
+        raise HTTPException(status_code=502, detail=f"LLM call failed: {e!s}")
+
     return {"workflow_description": workflow_description, "workflow_prompt": workflow_prompt}
 
 
@@ -491,7 +572,9 @@ async def advanced_step3(req: AdvancedStep3Request):
     tool_ids = _parse_tool_ids(req.tool_ids)
     import pandas as pd
 
-    df_descriptions = pd.DataFrame(req.tool_descriptions)
+    # Coerce tool_id to str, tool_type to str (JSON may send numeric IDs or null tool_type)
+    rows = [{"tool_id": str(d.tool_id), "tool_type": d.tool_type or "", "description": d.description} for d in req.tool_descriptions]
+    df_descriptions = pd.DataFrame(rows)
 
     loop = asyncio.get_event_loop()
 

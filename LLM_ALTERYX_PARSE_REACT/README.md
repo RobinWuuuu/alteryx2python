@@ -8,14 +8,14 @@ Modern React + FastAPI version of the LLM_ALTERYX_PARSE project.
 ```bash
 cd LLM_ALTERYX_PARSE_REACT
 pip install -r requirements.txt
-uvicorn api:app --reload --port 8000
+uvicorn api:app --reload --port 5201
 ```
 
 **Terminal 2 — Frontend:**
 ```bash
 cd LLM_ALTERYX_PARSE_REACT/frontend
 npm run dev
-# → http://localhost:5173
+# → http://localhost:5200
 ```
 
 ## Production (single server)
@@ -24,8 +24,8 @@ npm run dev
 cd LLM_ALTERYX_PARSE_REACT/frontend
 npm run build
 cd ..
-uvicorn api:app --port 8000
-# → http://localhost:8000
+uvicorn api:app --port 5201
+# → http://localhost:5201
 ```
 
 ## Bug Fixes vs Original

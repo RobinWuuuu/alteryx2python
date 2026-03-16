@@ -26,7 +26,11 @@ export function FileUpload() {
       })
       setStatus('idle')
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
+      const detail =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : null
+      const msg = detail ?? (err instanceof Error ? err.message : 'Upload failed')
       setError(msg)
       setStatus('error')
     }
