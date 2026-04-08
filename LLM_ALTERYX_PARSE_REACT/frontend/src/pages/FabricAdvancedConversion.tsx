@@ -10,6 +10,7 @@ import { ProgressTracker } from '../components/ProgressTracker'
 import { CodeViewer } from '../components/CodeViewer'
 import { MarkdownViewer } from '../components/MarkdownViewer'
 import type { FabricStep1Result, FabricActivity } from '../api/types'
+import { surfaceAppError, surfaceMessageError } from '../utils/errorSupport'
 
 function downloadText(content: string, filename: string) {
   const blob = new Blob([content], { type: 'text/plain' })
@@ -155,8 +156,14 @@ export function FabricAdvancedConversion() {
         },
         onResult: (data) =>
           setStep1({ status: 'done', progress: 1, message: '', result: data }),
-        onError: (_msg) =>
-          setStep1((prev) => ({ ...prev, status: 'error', message: _msg })),
+        onError: (_msg) => {
+          setStep1((prev) => ({ ...prev, status: 'error', message: _msg }))
+          void surfaceMessageError(_msg, {
+            title: 'Fabric Step 1 Failed',
+            scope: 'fabric-advanced-step1',
+            action: 'Generate Fabric activity descriptions',
+          })
+        },
       },
     )
   }
@@ -176,7 +183,12 @@ export function FabricAdvancedConversion() {
       )
       setStep2({ status: 'done', result: res, error: null })
     } catch (err) {
-      setStep2({ status: 'error', result: null, error: err instanceof Error ? err.message : String(err) })
+      const msg = await surfaceAppError(err, {
+        title: 'Fabric Step 2 Failed',
+        scope: 'fabric-advanced-step2',
+        action: 'Build Fabric structure guide',
+      })
+      setStep2({ status: 'error', result: null, error: msg })
     }
   }
 
@@ -196,7 +208,12 @@ export function FabricAdvancedConversion() {
       )
       setStep3({ status: 'done', result: res, error: null })
     } catch (err) {
-      setStep3({ status: 'error', result: null, error: err instanceof Error ? err.message : String(err) })
+      const msg = await surfaceAppError(err, {
+        title: 'Fabric Step 3 Failed',
+        scope: 'fabric-advanced-step3',
+        action: 'Generate final Fabric output',
+      })
+      setStep3({ status: 'error', result: null, error: msg })
     }
   }
 
@@ -237,18 +254,24 @@ ${step3.result?.final_prompt ?? ''}
   }
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-muted">
-        Three-step conversion: describe Fabric pipeline activities → structure guide → final Python/SQL code.
-      </p>
+    <div className="space-y-5 max-w-4xl">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100 mb-1">Fabric Pipeline Conversion</h2>
+        <p className="text-sm text-muted">
+          Three-step pipeline: describe each Fabric activity, build a code structure guide, then generate final Python code.
+        </p>
+      </div>
 
       {!canRun && (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>
-            {!fabricUpload && 'Upload a Fabric pipeline file in the sidebar. '}
-            {!config.api_key && 'Enter your OpenAI API key in the sidebar.'}
-          </span>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <AlertCircle size={14} className="text-warning" />
+            <span className="text-xs font-medium text-slate-300">Before you start</span>
+          </div>
+          <div className="space-y-1.5 text-xs text-muted">
+            {!fabricUpload && <div>Upload a Fabric pipeline (.json or .zip) in the sidebar</div>}
+            {!config.api_key && <div>Provide your OpenAI API key in the sidebar</div>}
+          </div>
         </div>
       )}
 
@@ -256,7 +279,7 @@ ${step3.result?.final_prompt ?? ''}
       <div className="rounded-xl border border-border bg-card p-5">
         <StepHeader n={1} title="Describe Pipeline Activities" status={step1.status} />
         <p className="text-xs text-muted mb-3">
-          Generates detailed descriptions of each Fabric activity to guide code generation.
+          Analyzes each Fabric pipeline activity and generates detailed descriptions to guide code generation.
         </p>
 
         <button
@@ -335,7 +358,7 @@ ${step3.result?.final_prompt ?? ''}
       >
         <StepHeader n={2} title="Generate Code Structure Guide" status={step2.status} />
         <p className="text-xs text-muted mb-3">
-          Maps Fabric activities to Python equivalents and defines the pipeline architecture.
+          Designs the overall code architecture, mapping Fabric activities to Python equivalents.
         </p>
 
         <button
@@ -383,7 +406,7 @@ ${step3.result?.final_prompt ?? ''}
       >
         <StepHeader n={3} title="Generate Final Python Code" status={step3.status} />
         <p className="text-xs text-muted mb-3">
-          Generates complete Jupyter-compatible Python code for the Fabric pipeline.
+          Produces the complete, production-ready Python script for the Fabric pipeline.
         </p>
 
         <button

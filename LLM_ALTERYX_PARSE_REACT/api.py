@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 import threading
@@ -31,6 +32,55 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+
+def _configure_support_log_file() -> None:
+    """Mirror backend logs into the shared desktop support log when packaged."""
+    log_path = os.environ.get("APP_SUPPORT_LOG_PATH")
+    if not log_path:
+        return
+    try:
+        Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+        root_logger = logging.getLogger()
+        abs_log_path = os.path.abspath(log_path)
+        if any(
+            isinstance(handler, logging.FileHandler)
+            and getattr(handler, "baseFilename", None) == abs_log_path
+            for handler in root_logger.handlers
+        ):
+            return
+
+        file_handler = logging.FileHandler(abs_log_path, encoding="utf-8")
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s [backend] %(message)s")
+        )
+        root_logger.addHandler(file_handler)
+        logging.info("Support log enabled: %s", abs_log_path)
+    except Exception as exc:
+        logging.warning("Could not attach backend file logger: %s", exc)
+
+
+_configure_support_log_file()
+
+
+def _configure_runtime_for_pyinstaller() -> None:
+    """PyInstaller folder exe: point SSL_* at certifi so OpenAI/httpx can verify HTTPS."""
+    if not getattr(sys, "frozen", False):
+        return
+    try:
+        import certifi
+
+        ca = certifi.where()
+        if ca and os.path.isfile(ca):
+            os.environ.setdefault("SSL_CERT_FILE", ca)
+            os.environ.setdefault("REQUESTS_CA_BUNDLE", ca)
+            logging.info("Using certifi CA bundle for HTTPS (frozen build): %s", ca)
+    except Exception as exc:
+        logging.warning("Could not set SSL cert bundle for frozen app: %s", exc)
+
+
+_configure_runtime_for_pyinstaller()
 
 from code import alteryx_parser as parser
 from code import description_generator
@@ -77,12 +127,14 @@ async def lifespan(app: FastAPI):
 # Step 2/3 accept large JSON payloads (many tools). If using a reverse proxy
 # (e.g. nginx), set client_max_body_size >= 20MB for /api/convert/advanced/*.
 MAX_ADVANCED_JSON_BODY_MB = 20
+MAX_UPLOAD_MB = 100
+UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 app = FastAPI(title="Alteryx to Python API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5200", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -108,10 +160,48 @@ async def validation_exception_handler(request, exc: RequestValidationError):
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
+def _safe_remove(path_str: Optional[str]) -> None:
+    if path_str and os.path.exists(path_str):
+        try:
+            os.remove(path_str)
+        except OSError:
+            pass
+
+
+async def _persist_upload_to_temp(file: UploadFile, *, default_suffix: str) -> tuple[str, int]:
+    """Stream upload content to disk so large files do not sit fully in memory."""
+    tmp_path = None
+    total_bytes = 0
+    max_bytes = MAX_UPLOAD_MB * 1024 * 1024
+
+    try:
+        suffix = Path(file.filename or "").suffix or default_suffix
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode="wb") as tmp:
+            tmp_path = tmp.name
+            while True:
+                chunk = await file.read(UPLOAD_CHUNK_SIZE)
+                if not chunk:
+                    break
+                total_bytes += len(chunk)
+                if total_bytes > max_bytes:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File is too large to process safely in the desktop app (limit: {MAX_UPLOAD_MB} MB).",
+                    )
+                tmp.write(chunk)
+
+        return tmp_path, total_bytes
+    except Exception:
+        _safe_remove(tmp_path)
+        raise
+    finally:
+        await file.close()
+
+
 # ---------------------------------------------------------------------------
-# Available models constant (shared with frontend via GET /api/models)
+# Available models — fetched live from OpenAI, with a fallback list
 # ---------------------------------------------------------------------------
-MODEL_OPTIONS = [
+FALLBACK_MODELS = [
     "gpt-4.1",
     "gpt-4o",
     "gpt-4o-mini",
@@ -124,6 +214,64 @@ MODEL_OPTIONS = [
     "gpt-5.1-codex-mini",
     "gpt-5.1-codex-max",
 ]
+
+_cached_models: Dict[str, Any] = {"models": None, "fetched_at": 0.0, "key": None, "total_fetched": None}
+_MODEL_CACHE_TTL = 300  # 5 minutes
+
+
+def _collect_openai_model_ids(client: Any) -> List[str]:
+    """Fetch every model id across all pages (models.list() is paginated)."""
+    ids: List[str] = []
+    page = client.models.list()
+    while True:
+        ids.extend(m.id for m in page.data)
+        if not page.has_next_page():
+            break
+        page = page.get_next_page()
+    return ids
+
+
+def _is_excluded_non_chat_model(model_id: str) -> bool:
+    """Drop embeddings, audio, image, legacy completion, etc."""
+    ml = model_id.lower()
+    if ml.startswith("ft:"):
+        return any(x in ml for x in ("embedding", "whisper", "moderation", "dall-e"))
+    if ml.startswith("gpt-") or ml.startswith("chatgpt-"):
+        return False
+    noise = (
+        "embedding",
+        "whisper",
+        "dall-e",
+        "tts-",
+        "moderation",
+        "davinci",
+        "babbage",
+        "curie",
+        "text-search",
+        "code-search",
+    )
+    return any(x in ml for x in noise)
+
+
+def _is_chat_completion_candidate(model_id: str) -> bool:
+    if _is_excluded_non_chat_model(model_id):
+        return False
+    ml = model_id.lower()
+    if ml.startswith("gpt-") or ml.startswith("chatgpt-"):
+        return True
+    if ml.startswith("ft:"):
+        return True
+    if ml.startswith("computer-use"):
+        return True
+    # o1, o3-mini, o4-mini, etc.
+    if re.match(r"^o\d", ml):
+        return True
+    return False
+
+
+def _merge_model_lists(live: List[str], fallback: List[str]) -> List[str]:
+    """Union, sorted, with fallback entries preserved if API omits them."""
+    return sorted(set(live) | set(fallback), key=str.lower)
 
 # ---------------------------------------------------------------------------
 # Pydantic request/response models
@@ -319,9 +467,59 @@ def health():
     return {"status": "ok"}
 
 
+class ModelsRequest(BaseModel):
+    api_key: str = ""
+    force_refresh: bool = False
+
+
 @app.get("/api/models")
-def get_models():
-    return {"models": MODEL_OPTIONS}
+def get_models_default():
+    return {"models": FALLBACK_MODELS, "source": "fallback"}
+
+
+@app.post("/api/models")
+def get_models_live(req: ModelsRequest):
+    """Fetch available chat models from OpenAI (all pages). Falls back to static list on error."""
+    if not req.api_key:
+        return {"models": FALLBACK_MODELS, "source": "fallback"}
+
+    now = time.time()
+    cache_key = req.api_key[-8:]
+    if (
+        not req.force_refresh
+        and _cached_models.get("key") == cache_key
+        and _cached_models.get("models")
+        and now - float(_cached_models.get("fetched_at") or 0) < _MODEL_CACHE_TTL
+    ):
+        tf = _cached_models.get("total_fetched")
+        out: Dict[str, Any] = {"models": _cached_models["models"], "source": "cached"}
+        if tf is not None:
+            out["total_fetched"] = tf
+        return out
+
+    try:
+        import openai
+
+        client = openai.OpenAI(api_key=req.api_key)
+        all_ids = _collect_openai_model_ids(client)
+        chat_models = [m for m in sorted(set(all_ids), key=str.lower) if _is_chat_completion_candidate(m)]
+        chat_models = _merge_model_lists(chat_models, FALLBACK_MODELS)
+        if not chat_models:
+            chat_models = list(FALLBACK_MODELS)
+        _cached_models.update(
+            key=cache_key,
+            models=chat_models,
+            fetched_at=now,
+            total_fetched=len(all_ids),
+        )
+        return {"models": chat_models, "source": "live", "total_fetched": len(all_ids)}
+    except Exception as exc:
+        logging.warning("Failed to fetch models from OpenAI: %s", exc, exc_info=True)
+        return {
+            "models": list(FALLBACK_MODELS),
+            "source": "fallback",
+            "error": str(exc),
+        }
 
 
 @app.post("/api/upload")
@@ -334,30 +532,19 @@ async def upload_workflow(file: UploadFile = File(...)):
         if not file.filename.lower().endswith((".yxmd", ".yxmc")):
             raise HTTPException(status_code=400, detail="Only .yxmd or .yxmc files are supported.")
 
-        # Save to a temp file (use binary mode explicitly for Windows)
-        suffix = Path(file.filename).suffix
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode="wb") as tmp:
-            content = await file.read()
-            tmp.write(content)
-            tmp_path = tmp.name
+        tmp_path, total_bytes = await _persist_upload_to_temp(file, default_suffix=".yxmd")
+        logging.info("Received workflow upload: %s (%0.2f MB)", file.filename, total_bytes / (1024 * 1024))
 
         # Parse immediately to validate and get stats
         try:
             df_nodes, df_connections = parser.load_alteryx_data(tmp_path)
         except Exception as exc:
-            if tmp_path and os.path.exists(tmp_path):
-                try:
-                    os.remove(tmp_path)
-                except OSError:
-                    pass
+            _safe_remove(tmp_path)
+            logging.exception("Failed to parse workflow upload: %s", file.filename)
             raise HTTPException(status_code=422, detail=f"Failed to parse workflow: {exc}")
 
         if df_nodes.empty:
-            if tmp_path and os.path.exists(tmp_path):
-                try:
-                    os.remove(tmp_path)
-                except OSError:
-                    pass
+            _safe_remove(tmp_path)
             raise HTTPException(status_code=422, detail="No tools found in the uploaded workflow file.")
 
         session_id = str(uuid.uuid4())
@@ -375,11 +562,7 @@ async def upload_workflow(file: UploadFile = File(...)):
         raise
     except Exception as exc:
         logging.exception("Upload failed")
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
+        _safe_remove(tmp_path)
         raise HTTPException(
             status_code=500,
             detail=f"Upload failed: {exc}. Check server logs for traceback.",
@@ -875,25 +1058,23 @@ async def upload_fabric(file: UploadFile = File(...)):
     if not any(fname.lower().endswith(ext) for ext in (".json", ".zip")):
         raise HTTPException(status_code=400, detail="Only .json or .zip files are supported.")
 
-    suffix = Path(fname).suffix or ".json"
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    content = await file.read()
-    tmp.write(content)
-    tmp.close()
+    tmp_path, total_bytes = await _persist_upload_to_temp(file, default_suffix=".json")
+    logging.info("Received Fabric upload: %s (%0.2f MB)", fname, total_bytes / (1024 * 1024))
 
     try:
-        activities, metadata = fabric_parser.load_fabric_pipeline(tmp.name)
+        activities, metadata = fabric_parser.load_fabric_pipeline(tmp_path)
     except Exception as exc:
-        os.remove(tmp.name)
+        _safe_remove(tmp_path)
+        logging.exception("Failed to parse Fabric upload: %s", fname)
         raise HTTPException(status_code=422, detail=f"Failed to parse Fabric pipeline: {exc}")
 
     if not activities:
-        os.remove(tmp.name)
+        _safe_remove(tmp_path)
         raise HTTPException(status_code=422, detail="No activities found in the pipeline file.")
 
     session_id = str(uuid.uuid4())
     _fabric_sessions[session_id] = {
-        "path": tmp.name,
+        "path": tmp_path,
         "activities": activities,
         "metadata": metadata,
         "created_at": time.time(),
@@ -992,3 +1173,9 @@ async def fabric_step3(req: FabricStep3Request):
 FRONTEND_DIST = ROOT / "frontend" / "dist"
 if FRONTEND_DIST.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="static")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("BACKEND_PORT", 9721))
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")

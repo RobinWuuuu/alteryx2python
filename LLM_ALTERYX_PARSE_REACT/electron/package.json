@@ -1,0 +1,63 @@
+{
+  "name": "pipeline-conversion-engine",
+  "version": "1.0.0",
+  "description": "Alteryx to Python/SQL Converter — Desktop App",
+  "main": "main.js",
+  "author": "Pipeline Team",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --dir",
+    "dist:installer": "electron-builder --win",
+    "dist:mac": "electron-builder --mac --dir",
+    "dist:mac:installer": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.pipeline.conversion-engine",
+    "productName": "Pipeline Conversion Engine",
+    "directories": {
+      "output": "../dist-electron"
+    },
+    "extraResources": [
+      {
+        "from": "../dist-backend/api",
+        "to": "backend/api"
+      },
+      {
+        "from": "../frontend/dist",
+        "to": "frontend"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "icon.png",
+      "signAndEditExecutable": false,
+      "forceCodeSigning": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "icon": "icon.png",
+      "darkModeSupport": true,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": "dir"
+    }
+  }
+}

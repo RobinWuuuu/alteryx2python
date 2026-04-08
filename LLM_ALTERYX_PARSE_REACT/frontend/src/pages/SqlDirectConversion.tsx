@@ -5,6 +5,7 @@ import { useStreamingJob } from '../hooks/useStreamingJob'
 import { ProgressTracker } from '../components/ProgressTracker'
 import { CodeViewer } from '../components/CodeViewer'
 import type { SqlDirectConvertResult } from '../api/types'
+import { surfaceMessageError } from '../utils/errorSupport'
 
 export function SqlDirectConversion() {
   const upload = useAppStore((s) => s.upload)
@@ -52,6 +53,11 @@ export function SqlDirectConversion() {
         onError: (msg) => {
           setStatus('error')
           setMessage(msg)
+          void surfaceMessageError(msg, {
+            title: 'SQL Direct Conversion Failed',
+            scope: 'sql-direct-convert-step1',
+            action: 'Run SQL direct conversion',
+          })
         },
       },
     )
@@ -65,20 +71,25 @@ export function SqlDirectConversion() {
   }
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-muted">
-        Quick per-tool SQL CTE generation + smart combine into a single SQL script.
-      </p>
+    <div className="space-y-5 max-w-4xl">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100 mb-1">SQL Direct Conversion</h2>
+        <p className="text-sm text-muted">
+          Generates SQL CTEs for each selected tool, then combines them into a single executable query.
+        </p>
+      </div>
 
-      {/* Validation hints */}
       {(!upload.sessionId || !config.api_key || toolIds.length === 0) && (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>
-            {!upload.sessionId && 'Upload a .yxmd file. '}
-            {!config.api_key && 'Enter your OpenAI API key. '}
-            {toolIds.length === 0 && 'Enter tool IDs in the sidebar.'}
-          </span>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <AlertCircle size={14} className="text-warning" />
+            <span className="text-xs font-medium text-slate-300">Before you start</span>
+          </div>
+          <div className="space-y-1.5 text-xs text-muted">
+            {!upload.sessionId && <div>Upload an Alteryx workflow (.yxmd) in the sidebar</div>}
+            {!config.api_key && <div>Provide your OpenAI API key in the sidebar</div>}
+            {toolIds.length === 0 && <div>Specify tool IDs to convert in the sidebar</div>}
+          </div>
         </div>
       )}
 

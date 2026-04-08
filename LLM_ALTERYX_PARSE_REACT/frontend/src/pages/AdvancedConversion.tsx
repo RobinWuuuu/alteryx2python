@@ -7,6 +7,7 @@ import { ProgressTracker } from '../components/ProgressTracker'
 import { CodeViewer } from '../components/CodeViewer'
 import { MarkdownViewer } from '../components/MarkdownViewer'
 import type { Step1Result } from '../api/types'
+import { surfaceAppError, surfaceMessageError } from '../utils/errorSupport'
 
 function downloadText(content: string, filename: string) {
   const blob = new Blob([content], { type: 'text/plain' })
@@ -122,7 +123,14 @@ export function AdvancedConversion() {
           })
         },
         onResult: (data) => setAdv1({ status: 'done', progress: 1, message: '', result: data }),
-        onError: (msg) => setAdv1({ status: 'error', message: msg }),
+        onError: (msg) => {
+          setAdv1({ status: 'error', message: msg })
+          void surfaceMessageError(msg, {
+            title: 'Advanced Step 1 Failed',
+            scope: 'advanced-convert-step1',
+            action: 'Generate tool descriptions',
+          })
+        },
       },
     )
   }
@@ -142,7 +150,12 @@ export function AdvancedConversion() {
       )
       setAdv2({ status: 'done', result: res })
     } catch (err) {
-      setAdv2({ status: 'error', error: err instanceof Error ? err.message : String(err) })
+      const msg = await surfaceAppError(err, {
+        title: 'Advanced Step 2 Failed',
+        scope: 'advanced-convert-step2',
+        action: 'Build workflow structure guide',
+      })
+      setAdv2({ status: 'error', error: msg })
     }
   }
 
@@ -177,7 +190,12 @@ export function AdvancedConversion() {
         final_prompt: res.final_prompt,
       })
     } catch (err) {
-      setAdv3({ status: 'error', error: err instanceof Error ? err.message : String(err) })
+      const msg = await surfaceAppError(err, {
+        title: 'Advanced Step 3 Failed',
+        scope: 'advanced-convert-step3',
+        action: 'Generate final Python workflow',
+      })
+      setAdv3({ status: 'error', error: msg })
     }
   }
 
@@ -216,26 +234,32 @@ ${adv3.result?.final_prompt ?? ''}
   }
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-muted">
-        Three-step comprehensive conversion: tool descriptions → structure guide → final Python code.
-      </p>
+    <div className="space-y-5 max-w-4xl">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100 mb-1">Advanced Conversion</h2>
+        <p className="text-sm text-muted">
+          Three-step pipeline: describe each tool, build a code structure guide, then generate production-ready Python.
+        </p>
+      </div>
 
       {!canRun && (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>
-            {!upload.sessionId && 'Upload a .yxmd file. '}
-            {!config.api_key && 'Enter your OpenAI API key. '}
-            {toolIds.length === 0 && 'Enter tool IDs above.'}
-          </span>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <AlertCircle size={14} className="text-warning" />
+            <span className="text-xs font-medium text-slate-300">Before you start</span>
+          </div>
+          <div className="space-y-1.5 text-xs text-muted">
+            {!upload.sessionId && <div>Upload an Alteryx workflow (.yxmd) in the sidebar</div>}
+            {!config.api_key && <div>Provide your OpenAI API key in the sidebar</div>}
+            {toolIds.length === 0 && <div>Specify tool IDs to convert in the sidebar</div>}
+          </div>
         </div>
       )}
 
       {/* ---- STEP 1 ---- */}
       <div className="rounded-xl border border-border bg-card p-5">
         <StepHeader n={1} title="Generate Tool Descriptions" status={adv1.status} />
-        <p className="text-xs text-muted mb-3">Creates detailed technical descriptions for each tool to guide code generation.</p>
+        <p className="text-xs text-muted mb-3">Analyzes each Alteryx tool and generates detailed technical descriptions to guide code generation.</p>
 
         <button
           onClick={adv1.status === 'running' ? cancelStep1 : handleStep1}
@@ -307,7 +331,7 @@ ${adv3.result?.final_prompt ?? ''}
       {/* ---- STEP 2 ---- */}
       <div className={`rounded-xl border bg-card p-5 transition-opacity ${adv1.status !== 'done' ? 'opacity-40 pointer-events-none' : ''}`} style={{ borderColor: adv1.status === 'done' ? '#2a2a3d' : '#2a2a3d' }}>
         <StepHeader n={2} title="Generate Python Code Structure Guide" status={adv2.status} />
-        <p className="text-xs text-muted mb-3">Creates a comprehensive guide for code organization, naming, and patterns.</p>
+        <p className="text-xs text-muted mb-3">Designs the overall code architecture, defining naming conventions, data flow, and patterns.</p>
 
         <button
           onClick={handleStep2}
@@ -347,7 +371,7 @@ ${adv3.result?.final_prompt ?? ''}
       {/* ---- STEP 3 ---- */}
       <div className={`rounded-xl border bg-card p-5 transition-opacity ${adv2.status !== 'done' ? 'opacity-40 pointer-events-none' : ''}`} style={{ borderColor: '#2a2a3d' }}>
         <StepHeader n={3} title="Generate Final Python Code" status={adv3.status} />
-        <p className="text-xs text-muted mb-3">Generates complete, production-ready Python code following the structure guide.</p>
+        <p className="text-xs text-muted mb-3">Produces the complete, production-ready Python script following the structure guide.</p>
 
         <button
           onClick={handleStep3}

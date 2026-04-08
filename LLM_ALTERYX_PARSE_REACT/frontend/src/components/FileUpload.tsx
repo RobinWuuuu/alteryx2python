@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, FileCheck, AlertCircle, Loader2 } from 'lucide-react'
 import { uploadFile } from '../api/client'
 import { useAppStore } from '../store/useAppStore'
+import { surfaceAppError } from '../utils/errorSupport'
 
 export function FileUpload() {
   const setUpload = useAppStore((s) => s.setUpload)
@@ -26,11 +27,12 @@ export function FileUpload() {
       })
       setStatus('idle')
     } catch (err: unknown) {
-      const detail =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
-          : null
-      const msg = detail ?? (err instanceof Error ? err.message : 'Upload failed')
+      const msg = await surfaceAppError(err, {
+        title: 'Workflow Upload Failed',
+        scope: 'workflow-upload',
+        action: 'Upload Alteryx workflow',
+        fileName: file.name,
+      })
       setError(msg)
       setStatus('error')
     }

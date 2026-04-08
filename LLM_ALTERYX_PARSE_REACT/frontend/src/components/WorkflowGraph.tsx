@@ -21,6 +21,8 @@ import { Loader2, GitBranch, RefreshCw, LayoutDashboard, Sparkles, CheckCircle2,
 import { useAppStore } from '../store/useAppStore'
 import { streamPost } from '../api/client'
 import axios from 'axios'
+import { getApiBase } from '../api/config'
+import { surfaceAppError } from '../utils/errorSupport'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -294,7 +296,7 @@ export function WorkflowGraph() {
     setLoading(true)
     setError(null)
     try {
-      const { data } = await axios.get(`/api/workflow/${sessionId}`)
+      const { data } = await axios.get(`${getApiBase()}/api/workflow/${sessionId}`)
       setRawNodes(data.nodes)
       setRawConns(data.connections)
       const { nodes: laid, edges: builtEdges } = buildGraph(data.nodes, data.connections, {})
@@ -304,7 +306,13 @@ export function WorkflowGraph() {
       setDescriptions({})
       setDescStatus('idle')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load workflow')
+      const msg = await surfaceAppError(err, {
+        title: 'Workflow View Failed',
+        scope: 'workflow-load',
+        action: 'Load workflow graph',
+        fileName: filename ?? undefined,
+      })
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -358,8 +366,14 @@ export function WorkflowGraph() {
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
+        const msg = await surfaceAppError(err, {
+          title: 'Workflow Description Failed',
+          scope: 'workflow-describe',
+          action: 'Generate workflow tool descriptions',
+          fileName: filename ?? undefined,
+        })
         setDescStatus('error')
-        setDescMessage(err instanceof Error ? err.message : 'Failed')
+        setDescMessage(msg)
       }
     }
   }, [sessionId, config])

@@ -168,16 +168,19 @@ export function HistoryPanel() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <Clock size={40} className="text-muted mb-4 opacity-40" />
-        <p className="text-muted text-sm">No history yet.</p>
-        <p className="text-muted text-xs mt-1 opacity-70">Generations will appear here after completion.</p>
+        <p className="text-muted text-sm">No conversions yet</p>
+        <p className="text-muted text-xs mt-1 opacity-70">Completed conversions will appear here for review and download.</p>
       </div>
     )
   }
 
   return (
-    <div>
+    <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm text-muted">{history.length} generation{history.length !== 1 ? 's' : ''}</span>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-100">History</h2>
+          <span className="text-xs text-muted">{history.length} generation{history.length !== 1 ? 's' : ''}</span>
+        </div>
         <button
           onClick={clearHistory}
           className="flex items-center gap-1.5 text-xs text-muted hover:text-error transition-colors px-2 py-1 rounded-lg hover:bg-error/10"

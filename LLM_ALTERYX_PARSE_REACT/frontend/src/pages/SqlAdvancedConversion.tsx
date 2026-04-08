@@ -7,6 +7,7 @@ import { ProgressTracker } from '../components/ProgressTracker'
 import { CodeViewer } from '../components/CodeViewer'
 import { MarkdownViewer } from '../components/MarkdownViewer'
 import type { Step1Result, SqlStep2Result, SqlStep3Result } from '../api/types'
+import { surfaceAppError, surfaceMessageError } from '../utils/errorSupport'
 
 function downloadText(content: string, filename: string) {
   const blob = new Blob([content], { type: 'text/plain' })
@@ -140,7 +141,14 @@ export function SqlAdvancedConversion() {
           setStep1Message('')
           setStep1Result(data)
         },
-        onError: (_msg) => setStep1Status('error'),
+        onError: (_msg) => {
+          setStep1Status('error')
+          void surfaceMessageError(_msg, {
+            title: 'SQL Advanced Step 1 Failed',
+            scope: 'sql-advanced-step1',
+            action: 'Generate SQL tool descriptions',
+          })
+        },
       },
     )
   }
@@ -163,8 +171,13 @@ export function SqlAdvancedConversion() {
       setStep2Status('done')
       setStep2Result(res)
     } catch (err) {
+      const msg = await surfaceAppError(err, {
+        title: 'SQL Advanced Step 2 Failed',
+        scope: 'sql-advanced-step2',
+        action: 'Build SQL structure guide',
+      })
       setStep2Status('error')
-      setStep2Error(err instanceof Error ? err.message : String(err))
+      setStep2Error(msg)
     }
   }
 
@@ -187,8 +200,13 @@ export function SqlAdvancedConversion() {
       setStep3Status('done')
       setStep3Result(res)
     } catch (err) {
+      const msg = await surfaceAppError(err, {
+        title: 'SQL Advanced Step 3 Failed',
+        scope: 'sql-advanced-step3',
+        action: 'Generate final SQL workflow',
+      })
       setStep3Status('error')
-      setStep3Error(err instanceof Error ? err.message : String(err))
+      setStep3Error(msg)
     }
   }
 
@@ -227,26 +245,32 @@ ${step3Result?.final_prompt ?? ''}
   }
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-muted">
-        Three-step SQL conversion: tool descriptions → SQL structure guide → final SQL script with CTEs.
-      </p>
+    <div className="space-y-5 max-w-4xl">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100 mb-1">SQL Advanced Conversion</h2>
+        <p className="text-sm text-muted">
+          Three-step pipeline: describe each tool, design a CTE structure guide, then generate the final SQL script.
+        </p>
+      </div>
 
       {!canRun && (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>
-            {!upload.sessionId && 'Upload a .yxmd file. '}
-            {!config.api_key && 'Enter your OpenAI API key. '}
-            {toolIds.length === 0 && 'Enter tool IDs in the sidebar.'}
-          </span>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <AlertCircle size={14} className="text-warning" />
+            <span className="text-xs font-medium text-slate-300">Before you start</span>
+          </div>
+          <div className="space-y-1.5 text-xs text-muted">
+            {!upload.sessionId && <div>Upload an Alteryx workflow (.yxmd) in the sidebar</div>}
+            {!config.api_key && <div>Provide your OpenAI API key in the sidebar</div>}
+            {toolIds.length === 0 && <div>Specify tool IDs to convert in the sidebar</div>}
+          </div>
         </div>
       )}
 
       {/* ---- STEP 1 ---- */}
       <div className="rounded-xl border border-border bg-card p-5">
         <StepHeader n={1} title="Generate Tool Descriptions" status={step1Status} />
-        <p className="text-xs text-muted mb-3">Analyzes each Alteryx tool to build context for SQL generation.</p>
+        <p className="text-xs text-muted mb-3">Analyzes each Alteryx tool and generates detailed descriptions to guide SQL generation.</p>
 
         <button
           onClick={step1Status === 'running' ? cancelStep1 : handleStep1}
@@ -316,7 +340,7 @@ ${step3Result?.final_prompt ?? ''}
       {/* ---- STEP 2 ---- */}
       <div className={`rounded-xl border border-border bg-card p-5 transition-opacity ${step1Status !== 'done' ? 'opacity-40 pointer-events-none' : ''}`}>
         <StepHeader n={2} title="Generate SQL Structure Guide" status={step2Status} />
-        <p className="text-xs text-muted mb-3">Creates a CTE chain design and SQL patterns guide for the workflow.</p>
+        <p className="text-xs text-muted mb-3">Designs the CTE chain architecture, data flow, and SQL patterns for the workflow.</p>
 
         <button
           onClick={handleStep2}
@@ -357,7 +381,7 @@ ${step3Result?.final_prompt ?? ''}
       {/* ---- STEP 3 ---- */}
       <div className={`rounded-xl border border-border bg-card p-5 transition-opacity ${step2Status !== 'done' ? 'opacity-40 pointer-events-none' : ''}`}>
         <StepHeader n={3} title="Generate Final SQL Script" status={step3Status} />
-        <p className="text-xs text-muted mb-3">Generates a complete SQL script with CTEs following the structure guide.</p>
+        <p className="text-xs text-muted mb-3">Produces the complete SQL script with CTEs following the structure guide.</p>
 
         <button
           onClick={handleStep3}

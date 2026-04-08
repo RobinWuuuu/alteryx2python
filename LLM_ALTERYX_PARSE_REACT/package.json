@@ -1,0 +1,12 @@
+{
+  "name": "alteryx-to-python-converter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Alteryx to Python/SQL Converter — Electron desktop app",
+  "scripts": {
+    "dev:backend": "cd LLM_ALTERYX_PARSE_REACT && uvicorn api:app --reload --port 9721",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:electron": "cd electron && npx electron .",
+    "build": "build-all.bat"
+  }
+}

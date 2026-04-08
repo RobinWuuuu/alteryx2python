@@ -1,20 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, Loader2, Bot, ClipboardList, ListOrdered, PackageSearch,
          PanelLeftClose, Key, Hash, Workflow, Zap, Database,
-         Upload, FileCheck, AlertCircle, X } from 'lucide-react'
+         Upload, FileCheck, AlertCircle, X, RefreshCw, Mail } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { FileUpload } from '../FileUpload'
-import { getSequence, getChildren, uploadFabricFile } from '../../api/client'
+import { getSequence, getChildren, uploadFabricFile, getModels } from '../../api/client'
+import { surfaceAppError, surfaceMessageError } from '../../utils/errorSupport'
 
-const MODEL_OPTIONS = [
+const FALLBACK_MODELS = [
   'gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'o1', 'o3-mini-high',
   'gpt-5', 'gpt-5.2', 'gpt-5-mini',
   'gpt-5.1-codex', 'gpt-5.1-codex-mini', 'gpt-5.1-codex-max',
 ]
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
 
 function Step({ n, title, optional, children, accent }: {
   n: number
@@ -26,16 +23,16 @@ function Step({ n, title, optional, children, accent }: {
   const a = accent ?? { bg: 'rgba(0,166,80,0.18)', color: '#00A650' }
   return (
     <div>
-      <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
+      <div className="flex items-center gap-2 px-3 pt-3.5 pb-1.5">
         <span
-          className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+          className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
           style={{ background: a.bg, color: a.color }}
         >
           {n}
         </span>
-        <span className="text-xs font-semibold text-slate-300 flex-1 leading-none">{title}</span>
+        <span className="text-[11px] font-semibold text-slate-300 flex-1 leading-none tracking-wide uppercase">{title}</span>
         {optional && (
-          <span className="text-[9px] uppercase tracking-wide text-muted border border-border rounded px-1 py-0.5 leading-none">
+          <span className="text-[8px] uppercase tracking-wider text-muted border border-border rounded px-1 py-0.5 leading-none">
             opt
           </span>
         )}
@@ -47,31 +44,35 @@ function Step({ n, title, optional, children, accent }: {
   )
 }
 
-function ModelSelect({ value, onChange, label }: {
+function ModelSelect({ value, onChange, label, models, loading }: {
   value: string
   onChange: (v: string) => void
   label: string
+  models: string[]
+  loading?: boolean
 }) {
+  const opts = models.length > 0 ? models : FALLBACK_MODELS
+  const inList = opts.includes(value)
   return (
     <div className="mb-2 last:mb-0">
       <label className="block text-[10px] text-muted mb-1">{label}</label>
       <div className="relative">
         <select
-          value={value}
+          value={inList ? value : (value || opts[0] || '')}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none bg-[#0d0d1a] border border-border rounded-md px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-primary/60 transition-colors cursor-pointer"
+          disabled={loading}
+          className="w-full appearance-none bg-[#0d0d1a] border border-border rounded-md px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-primary/60 transition-colors cursor-pointer disabled:opacity-50"
         >
-          {MODEL_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          {!inList && value ? (
+            <option value={value}>{value}</option>
+          ) : null}
+          {opts.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
         <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
       </div>
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Fabric file upload widget (for sidebar)
-// ---------------------------------------------------------------------------
 
 function FabricFileUpload() {
   const fabricUpload    = useAppStore((s) => s.fabricUpload)
@@ -82,7 +83,13 @@ function FabricFileUpload() {
 
   async function handleFile(file: File) {
     if (!file.name.endsWith('.json') && !file.name.endsWith('.zip')) {
-      setError('Only .json or .zip Fabric pipeline files are supported.')
+      const msg = await surfaceMessageError('Only .json or .zip Fabric pipeline files are supported.', {
+        title: 'Fabric Upload Blocked',
+        scope: 'fabric-upload',
+        action: 'Upload Fabric pipeline',
+        fileName: file.name,
+      })
+      setError(msg)
       return
     }
     setUploading(true)
@@ -91,7 +98,13 @@ function FabricFileUpload() {
       const res = await uploadFabricFile(file)
       setFabricUpload(res)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      const msg = await surfaceAppError(err, {
+        title: 'Fabric Upload Failed',
+        scope: 'fabric-upload',
+        action: 'Upload Fabric pipeline',
+        fileName: file.name,
+      })
+      setError(msg)
     } finally {
       setUploading(false)
     }
@@ -142,7 +155,7 @@ function FabricFileUpload() {
         ) : (
           <Upload size={18} className="text-muted" />
         )}
-        <p className="text-xs text-muted">{uploading ? 'Parsing…' : 'Drop .json / .zip'}</p>
+        <p className="text-xs text-muted">{uploading ? 'Parsing...' : 'Drop .json / .zip'}</p>
         {!uploading && <p className="text-[10px] text-muted/60">or click to browse</p>}
       </div>
       {error && (
@@ -155,10 +168,6 @@ function FabricFileUpload() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Sidebar
-// ---------------------------------------------------------------------------
-
 const FABRIC_ACCENT = { bg: 'rgba(124,58,237,0.18)', color: '#8b5cf6' }
 
 const MODE_HEADER = {
@@ -167,7 +176,7 @@ const MODE_HEADER = {
     iconBg:     'linear-gradient(135deg, #006C38, #00A650)',
     iconShadow: 'rgba(0,166,80,0.35)',
     icon:       <Zap size={13} className="text-white" strokeWidth={2.3} />,
-    label:      'Alteryx → Python',
+    label:      'Alteryx \u2192 Python',
     labelColor: '#6CC24A',
   },
   sql: {
@@ -175,7 +184,7 @@ const MODE_HEADER = {
     iconBg:     'linear-gradient(135deg, #164e63, #0891b2)',
     iconShadow: 'rgba(8,145,178,0.35)',
     icon:       <Database size={13} className="text-white" strokeWidth={2.3} />,
-    label:      'Alteryx → SQL',
+    label:      'Alteryx \u2192 SQL',
     labelColor: '#38bdf8',
   },
   fabric: {
@@ -183,7 +192,7 @@ const MODE_HEADER = {
     iconBg:     'linear-gradient(135deg, #4c1d95, #7c3aed)',
     iconShadow: 'rgba(124,58,237,0.35)',
     icon:       <Workflow size={13} className="text-white" strokeWidth={2.3} />,
-    label:      'MS Fabric → Code',
+    label:      'MS Fabric \u2192 Code',
     labelColor: '#a78bfa',
   },
 } as const
@@ -213,6 +222,56 @@ export function Sidebar({ onCollapse, appMode }: {
   const [childLoading,   setChildLoading]   = useState(false)
   const [childError,     setChildError]     = useState<string | null>(null)
 
+  // Dynamic model list
+  const [modelList, setModelList] = useState<string[]>(FALLBACK_MODELS)
+  const [modelsLoading, setModelsLoading] = useState(false)
+  const [modelsSource, setModelsSource] = useState<string>('fallback')
+  const [modelsTotalApi, setModelsTotalApi] = useState<number | null>(null)
+  const [modelsFetchError, setModelsFetchError] = useState<string | null>(null)
+
+  const fetchModels = useCallback(async (key?: string, forceRefresh = false, showPopup = false) => {
+    setModelsLoading(true)
+    setModelsFetchError(null)
+    try {
+      const res = await getModels(key, { forceRefresh })
+      setModelList(res.models)
+      setModelsSource(res.source)
+      setModelsTotalApi(typeof res.total_fetched === 'number' ? res.total_fetched : null)
+      if (res.source === 'fallback' && res.error) {
+        setModelsFetchError(res.error)
+        if (showPopup) {
+          await surfaceMessageError(res.error, {
+            title: 'Model Refresh Fell Back',
+            scope: 'models-refresh',
+            action: 'Refresh OpenAI model list',
+            extraDetails: 'The app returned the built-in fallback model list instead of a fresh API response.',
+          })
+        }
+      }
+    } catch (err) {
+      setModelList(FALLBACK_MODELS)
+      setModelsSource('fallback')
+      setModelsTotalApi(null)
+      const msg = await surfaceAppError(err, {
+        title: 'Model Refresh Failed',
+        scope: 'models-refresh',
+        action: 'Load OpenAI model list',
+        popup: showPopup,
+      })
+      setModelsFetchError(msg.replace(/^Request failed with status code /, 'HTTP '))
+    } finally {
+      setModelsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const key = config.api_key?.trim()
+    if (key && key.length >= 20) {
+      const timer = setTimeout(() => fetchModels(key), 600)
+      return () => clearTimeout(timer)
+    }
+  }, [config.api_key, fetchModels])
+
   const handleGenerateSequence = async () => {
     if (!upload.sessionId) return
     setSeqLoading(true)
@@ -221,7 +280,12 @@ export function Sidebar({ onCollapse, appMode }: {
       const res = await getSequence(upload.sessionId)
       setSequenceStr(res.sequence_str)
     } catch (err) {
-      setSeqError(err instanceof Error ? err.message : 'Failed')
+      const msg = await surfaceAppError(err, {
+        title: 'Execution Sequence Failed',
+        scope: 'workflow-sequence',
+        action: 'Generate workflow execution sequence',
+      })
+      setSeqError(msg)
     } finally {
       setSeqLoading(false)
     }
@@ -235,13 +299,55 @@ export function Sidebar({ onCollapse, appMode }: {
       const res = await getChildren(upload.sessionId, containerInput.trim())
       setChildToolIds(res.child_tool_ids)
     } catch (err) {
-      setChildError(err instanceof Error ? err.message : 'Failed')
+      const msg = await surfaceAppError(err, {
+        title: 'Container Lookup Failed',
+        scope: 'workflow-children',
+        action: 'Load container child tool IDs',
+        extraDetails: `Container tool ID: ${containerInput.trim()}`,
+      })
+      setChildError(msg)
     } finally {
       setChildLoading(false)
     }
   }
 
   const seqCount = sequenceStr ? sequenceStr.split(',').filter(Boolean).length : 0
+
+  const modelHeader = (
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <div className="flex items-center gap-1">
+          <Bot size={10} className="text-muted shrink-0" />
+          <span className="text-[10px] text-muted truncate">
+            {modelsSource === 'live'
+              ? `${modelList.length} models loaded`
+              : modelsSource === 'cached'
+                ? `${modelList.length} models (cached)`
+                : 'Using default models'}
+          </span>
+        </div>
+        {modelsTotalApi != null && modelsSource !== 'fallback' && (
+          <span className="text-[9px] text-muted/70 pl-[18px]">
+            {modelsTotalApi} available on API, filtered to chat models
+          </span>
+        )}
+        {modelsFetchError && (
+          <p className="text-[9px] text-error/90 pl-[18px] leading-snug mt-0.5" title={modelsFetchError}>
+            Could not fetch models: {modelsFetchError.slice(0, 100)}
+            {modelsFetchError.length > 100 ? '…' : ''}
+          </p>
+        )}
+      </div>
+      <button
+        onClick={() => fetchModels(config.api_key?.trim(), true, true)}
+        disabled={modelsLoading || !config.api_key?.trim()}
+        className="p-1 rounded text-muted hover:text-slate-300 hover:bg-white/5 transition-all disabled:opacity-30 shrink-0"
+        title="Refresh model list from OpenAI"
+      >
+        <RefreshCw size={10} className={modelsLoading ? 'animate-spin' : ''} />
+      </button>
+    </div>
+  )
 
   return (
     <aside className="flex flex-col h-full bg-surface border-r border-border" style={{ width: 280 }}>
@@ -278,14 +384,11 @@ export function Sidebar({ onCollapse, appMode }: {
       <div className="flex-1 overflow-y-auto divide-y divide-border/50">
 
         {appMode === 'fabric' ? (
-          /* ── Fabric sidebar ── */
           <>
-            {/* 1 · Upload Pipeline */}
             <Step n={1} title="Upload Pipeline" accent={FABRIC_ACCENT}>
               <FabricFileUpload />
             </Step>
 
-            {/* 2 · API Key */}
             <Step n={2} title="OpenAI API Key" accent={FABRIC_ACCENT}>
               <div className="relative">
                 <Key size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
@@ -297,32 +400,38 @@ export function Sidebar({ onCollapse, appMode }: {
                   className="w-full bg-[#0d0d1a] border border-border rounded-md pl-7 pr-3 py-1.5 text-xs text-slate-200 placeholder-muted focus:outline-none focus:border-[#7c3aed]/60 transition-colors"
                 />
               </div>
+              {config.api_key && modelsSource === 'live' && (
+                <p className="text-[9px] text-success mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" /> Key verified
+                </p>
+              )}
             </Step>
 
-            {/* 3 · Models */}
             <Step n={3} title="Models" accent={FABRIC_ACCENT}>
-              <div className="flex items-center gap-1 mb-2">
-                <Bot size={10} className="text-muted" />
-                <span className="text-[10px] text-muted">Select model for each stage</span>
-              </div>
+              {modelHeader}
               <ModelSelect
                 label="Describe Activities (per-activity)"
                 value={config.code_generate_model}
                 onChange={(v) => setConfig({ code_generate_model: v })}
+                models={modelList}
+                loading={modelsLoading}
               />
               <ModelSelect
                 label="Structure Guide"
                 value={config.reasoning_model}
                 onChange={(v) => setConfig({ reasoning_model: v })}
+                models={modelList}
+                loading={modelsLoading}
               />
               <ModelSelect
                 label="Final Code Generation"
                 value={config.code_combine_model}
                 onChange={(v) => setConfig({ code_combine_model: v })}
+                models={modelList}
+                loading={modelsLoading}
               />
             </Step>
 
-            {/* 4 · Extra Instructions */}
             <Step n={4} title="Extra Instructions" optional accent={FABRIC_ACCENT}>
               <textarea
                 value={extraInstructions}
@@ -334,14 +443,11 @@ export function Sidebar({ onCollapse, appMode }: {
             </Step>
           </>
         ) : (
-          /* ── Alteryx sidebar (Python & SQL modes) ── */
           <>
-            {/* 1 · Upload */}
             <Step n={1} title="Upload Workflow">
               <FileUpload />
             </Step>
 
-            {/* 2 · API Key */}
             <Step n={2} title="OpenAI API Key">
               <div className="relative">
                 <Key size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
@@ -353,35 +459,39 @@ export function Sidebar({ onCollapse, appMode }: {
                   className="w-full bg-[#0d0d1a] border border-border rounded-md pl-7 pr-3 py-1.5 text-xs text-slate-200 placeholder-muted focus:outline-none focus:border-primary/60 transition-colors"
                 />
               </div>
+              {config.api_key && modelsSource === 'live' && (
+                <p className="text-[9px] text-success mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" /> Key verified
+                </p>
+              )}
             </Step>
 
-            {/* 3 · Models */}
             <Step n={3} title="Models">
-              <div className="flex items-center gap-1 mb-2">
-                <Bot size={10} className="text-muted" />
-                <span className="text-[10px] text-muted">Select model for each stage</span>
-              </div>
+              {modelHeader}
               <ModelSelect
                 label="Code Generate (per-tool)"
                 value={config.code_generate_model}
                 onChange={(v) => setConfig({ code_generate_model: v })}
+                models={modelList}
+                loading={modelsLoading}
               />
               <ModelSelect
                 label="Reasoning (descriptions)"
                 value={config.reasoning_model}
                 onChange={(v) => setConfig({ reasoning_model: v })}
+                models={modelList}
+                loading={modelsLoading}
               />
               <ModelSelect
                 label="Code Combine (final)"
                 value={config.code_combine_model}
                 onChange={(v) => setConfig({ code_combine_model: v })}
+                models={modelList}
+                loading={modelsLoading}
               />
             </Step>
 
-            {/* 4 · Get Tool IDs (helpers) */}
             <Step n={4} title="Get Tool IDs">
-
-              {/* Execution sequence */}
               <div className="mb-3">
                 <p className="text-[10px] text-muted uppercase tracking-wide mb-1.5">Execution Sequence</p>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -417,7 +527,7 @@ export function Sidebar({ onCollapse, appMode }: {
                       onClick={() => setSeqExpanded((v) => !v)}
                       className="text-[10px] text-muted hover:text-slate-400 transition-colors"
                     >
-                      {seqExpanded ? '▾ Hide sequence' : '▸ Show sequence'}
+                      {seqExpanded ? '\u25BE Hide sequence' : '\u25B8 Show sequence'}
                     </button>
                     {seqExpanded && (
                       <p className="text-[10px] font-mono text-slate-400 break-all mt-1 p-2 rounded bg-[#0d0d1a] border border-border leading-relaxed">
@@ -428,7 +538,6 @@ export function Sidebar({ onCollapse, appMode }: {
                 )}
               </div>
 
-              {/* Container children */}
               <div>
                 <p className="text-[10px] text-muted uppercase tracking-wide mb-1.5">Container Children</p>
                 <div className="flex gap-1.5">
@@ -456,7 +565,6 @@ export function Sidebar({ onCollapse, appMode }: {
               </div>
             </Step>
 
-            {/* 5 · Tool IDs */}
             <Step n={5} title="Tool IDs for Conversion">
               <div className="flex items-center gap-1 mb-1.5">
                 <Hash size={10} className="text-muted" />
@@ -471,7 +579,6 @@ export function Sidebar({ onCollapse, appMode }: {
               />
             </Step>
 
-            {/* 6 · Extra Instructions */}
             <Step n={6} title="Extra Instructions" optional>
               <textarea
                 value={extraInstructions}
@@ -485,6 +592,22 @@ export function Sidebar({ onCollapse, appMode }: {
         )}
 
       </div>
+
+      {/* Footer */}
+      <div className="shrink-0 border-t border-border/50 px-3 py-2.5" style={{ background: 'rgba(10,10,15,0.6)' }}>
+        <div className="flex items-center justify-between text-[9px] text-muted/50">
+          <span>Built by Wu Robin</span>
+          <a
+            href="mailto:Wu.Robin@bcg.com"
+            className="flex items-center gap-0.5 hover:text-muted transition-colors"
+            title="Contact: Wu.Robin@bcg.com"
+          >
+            <Mail size={8} />
+            <span>Contact</span>
+          </a>
+        </div>
+      </div>
+
     </aside>
   )
 }

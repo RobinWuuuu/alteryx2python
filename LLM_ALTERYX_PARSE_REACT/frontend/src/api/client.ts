@@ -8,14 +8,19 @@ import type {
   ToolDescription,
   UploadResponse,
 } from './types'
+import { getApiBase } from './config'
 
-const api = axios.create({ baseURL: '' }) // proxied via vite
+const api = axios.create({ baseURL: '' })
+api.interceptors.request.use((cfg) => {
+  cfg.baseURL = getApiBase();
+  return cfg;
+});
 
 // ------- Upload -------
 export async function uploadFile(file: File): Promise<UploadResponse> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await api.post<UploadResponse>('/api/upload', form)
+  const { data } = await api.post<UploadResponse>('/api/upload', form, { timeout: 300_000 })
   return data
 }
 
@@ -119,7 +124,7 @@ export async function runSqlStep3(
 export async function uploadFabricFile(file: File): Promise<import('./types').FabricUploadResponse> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await api.post('/api/fabric/upload', form)
+  const { data } = await api.post('/api/fabric/upload', form, { timeout: 300_000 })
   return data
 }
 
@@ -164,9 +169,27 @@ export async function runFabricStep3(
 }
 
 // ------- Models -------
-export async function getModels(): Promise<string[]> {
-  const { data } = await api.get<{ models: string[] }>('/api/models')
-  return data.models
+export type ModelsResponse = {
+  models: string[]
+  source: string
+  total_fetched?: number
+  /** Present when live fetch failed but server returned fallback list */
+  error?: string
+}
+
+export async function getModels(
+  apiKey?: string,
+  options?: { forceRefresh?: boolean },
+): Promise<ModelsResponse> {
+  if (apiKey) {
+    const { data } = await api.post<ModelsResponse>('/api/models', {
+      api_key: apiKey,
+      force_refresh: options?.forceRefresh ?? false,
+    })
+    return data
+  }
+  const { data } = await api.get<ModelsResponse>('/api/models')
+  return data
 }
 
 // ------- SSE streaming helper -------
@@ -182,7 +205,8 @@ export async function* streamPost<T>(
   | { type: 'error'; message: string }
   | { type: 'heartbeat' }
 > {
-  const response = await fetch(url, {
+  const fullUrl = url.startsWith('http') ? url : `${getApiBase()}${url}`;
+  const response = await fetch(fullUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Zap, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react'
+import { Zap, ChevronDown, ChevronRight, AlertCircle, Upload, Key, Hash } from 'lucide-react'
 import { useAppStore, parsedToolIds } from '../store/useAppStore'
 import { useStreamingJob } from '../hooks/useStreamingJob'
 import { ProgressTracker } from '../components/ProgressTracker'
 import { CodeViewer } from '../components/CodeViewer'
 import type { DirectConvertResult } from '../api/types'
+import { surfaceMessageError } from '../utils/errorSupport'
 
 export function DirectConversion() {
   const upload = useAppStore((s) => s.upload)
@@ -22,10 +23,16 @@ export function DirectConversion() {
   const toolIds = parsedToolIds(toolIdsRaw)
   const canRun = !!upload.sessionId && !!config.api_key && toolIds.length > 0
 
+  const missingItems = [
+    !upload.sessionId && { icon: <Upload size={12} />, text: 'Upload an Alteryx workflow (.yxmd)' },
+    !config.api_key && { icon: <Key size={12} />, text: 'Provide your OpenAI API key in the sidebar' },
+    toolIds.length === 0 && { icon: <Hash size={12} />, text: 'Specify tool IDs to convert in the sidebar' },
+  ].filter(Boolean) as { icon: React.ReactNode; text: string }[]
+
   const handleRun = async () => {
     if (!canRun) return
     resetDirect()
-    setDirect({ status: 'running', progress: 0, message: 'Starting…' })
+    setDirect({ status: 'running', progress: 0, message: 'Starting\u2026' })
 
     await run(
       '/api/convert/direct',
@@ -56,7 +63,14 @@ export function DirectConversion() {
             prompt_used: data.prompt_used,
           })
         },
-        onError: (msg) => setDirect({ status: 'error', message: msg }),
+        onError: (msg) => {
+          setDirect({ status: 'error', message: msg })
+          void surfaceMessageError(msg, {
+            title: 'Direct Conversion Failed',
+            scope: 'direct-convert-step1',
+            action: 'Run direct conversion',
+          })
+        },
       },
     )
   }
@@ -67,21 +81,30 @@ export function DirectConversion() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Description */}
-      <p className="text-sm text-muted">
-        Quick per-tool code generation + smart combine into a single Python script.
-      </p>
+    <div className="space-y-5 max-w-4xl">
+      {/* Header */}
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100 mb-1">Direct Conversion</h2>
+        <p className="text-sm text-muted">
+          Generates Python code for each selected tool, then combines them into one executable script.
+        </p>
+      </div>
 
-      {/* Validation hints */}
-      {(!upload.sessionId || !config.api_key || toolIds.length === 0) && (
-        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>
-            {!upload.sessionId && 'Upload a .yxmd file. '}
-            {!config.api_key && 'Enter your OpenAI API key. '}
-            {toolIds.length === 0 && 'Enter tool IDs above.'}
-          </span>
+      {/* Validation checklist */}
+      {missingItems.length > 0 && (
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <AlertCircle size={14} className="text-warning" />
+            <span className="text-xs font-medium text-slate-300">Before you start</span>
+          </div>
+          <div className="space-y-1.5">
+            {missingItems.map((item, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-muted">
+                <span className="text-warning/70">{item.icon}</span>
+                {item.text}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -94,7 +117,7 @@ export function DirectConversion() {
           style={
             direct.status === 'running'
               ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }
-              : { background: 'linear-gradient(135deg, #006C38, #00A650)', color: 'white' }
+              : { background: 'linear-gradient(135deg, #006C38, #00A650)', color: 'white', boxShadow: canRun ? '0 2px 12px rgba(0,166,80,0.3)' : 'none' }
           }
         >
           <Zap size={16} />
@@ -108,7 +131,7 @@ export function DirectConversion() {
           status={direct.status}
           progress={direct.progress}
           message={direct.message}
-          label={`Generating code for ${toolIds.length} tool${toolIds.length !== 1 ? 's' : ''}…`}
+          label={`Generating code for ${toolIds.length} tool${toolIds.length !== 1 ? 's' : ''}\u2026`}
         />
       )}
 
@@ -126,7 +149,6 @@ export function DirectConversion() {
             filename={`direct_conversion_${toolIds.slice(0, 3).join('-')}.py`}
           />
 
-          {/* Prompt used (collapsible) */}
           <div className="rounded-xl border border-border overflow-hidden">
             <button
               onClick={() => setShowPrompt((p) => !p)}
